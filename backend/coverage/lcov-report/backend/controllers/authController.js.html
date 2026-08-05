@@ -1,0 +1,118 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for backend/controllers/authController.js</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../prettify.css" />
+    <link rel="stylesheet" href="../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">backend/controllers</a> authController.js</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">43.82% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>39/89</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">48.27% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>14/29</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">23.07% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>3/13</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">100% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>11/11</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line low'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a>
+<a name='L3'></a><a href='#L3'>3</a>
+<a name='L4'></a><a href='#L4'>4</a>
+<a name='L5'></a><a href='#L5'>5</a>
+<a name='L6'></a><a href='#L6'>6</a>
+<a name='L7'></a><a href='#L7'>7</a>
+<a name='L8'></a><a href='#L8'>8</a>
+<a name='L9'></a><a href='#L9'>9</a>
+<a name='L10'></a><a href='#L10'>10</a>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">14x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">const ah=require("express-async-handler"),User=require("../models/User"),jwt=require("jsonwebtoken"),{generateToken,generateRefreshToken}=require("../middleware/auth");
+exports.register=ah(async(req,res)=&gt;{const{name,email,password,phone}=req.body;<span class="missing-if-branch" title="if path not taken" >I</span>if(!name||!email||!password)<span class="cstat-no" title="statement not covered" >return res.status(400).json({message:"Required fields missing"});i</span>f(await User.findOne({email:email.toLowerCase()}))return res.status(400).json({message:"Email already registered"});const user=await User.create({name,email,password,phone});const token=generateToken(user._id),refreshToken=generateRefreshToken(user._id);user.refreshToken=refreshToken;user.lastLogin=new Date();await user.save({validateBeforeSave:false});res.status(201).json({success:true,token,refreshToken,user:{_id:user._id,name:user.name,email:user.email,role:user.role}});});
+exports.login=ah(async(req,res)=&gt;{const{email,password}=req.body;<span class="missing-if-branch" title="if path not taken" >I</span>if(!email||!password)<span class="cstat-no" title="statement not covered" >return res.status(400).json({message:"Email and password required"});c</span>onst user=await User.findOne({email:email.toLowerCase()}).select("+password +refreshToken");if(!user||!(await user.matchPassword(password)))return res.status(401).json({message:"Invalid credentials"});<span class="missing-if-branch" title="if path not taken" >I</span>if(!user.isActive)<span class="cstat-no" title="statement not covered" >return res.status(403).json({message:"Account deactivated"});c</span>onst token=generateToken(user._id),refreshToken=generateRefreshToken(user._id);user.refreshToken=refreshToken;user.lastLogin=new Date();await user.save({validateBeforeSave:false});res.json({success:true,token,refreshToken,user:{_id:user._id,name:user.name,email:user.email,role:user.role,avatar:user.avatar,phone:user.phone,wishlist:user.wishlist,addresses:user.addresses}});});
+exports.refreshToken=ah(<span class="fstat-no" title="function not covered" >as</span>ync(req,res)=&gt;{const{refreshToken}=<span class="cstat-no" title="statement not covered" >req.body;<span class="cstat-no" title="statement not covered" ></span>if(!refreshToken)<span class="cstat-no" title="statement not covered" >return res.status(401).json({message:"No refresh token"});c</span></span>onst decoded=<span class="cstat-no" title="statement not covered" >jwt.verify(refreshToken,process.env.JWT_REFRESH_SECRET);</span>const user=<span class="cstat-no" title="statement not covered" >await User.findById(decoded.id).select("+refreshToken");<span class="cstat-no" title="statement not covered" ></span>if(!user||user.refreshToken!==refreshToken)<span class="cstat-no" title="statement not covered" >return res.status(401).json({message:"Invalid"});c</span></span>onst newToken=<span class="cstat-no" title="statement not covered" >generateToken(user._id),</span>newRefresh=<span class="cstat-no" title="statement not covered" >generateRefreshToken(user._id);<span class="cstat-no" title="statement not covered" ></span>user.refreshToken=newRefresh;<span class="cstat-no" title="statement not covered" >a</span>wait user.save({validateBeforeSave:false});<span class="cstat-no" title="statement not covered" >r</span>es.json({success:true,token:newToken,refreshToken:newRefresh});}</span>);
+exports.getMe=ah(async(req,res)=&gt;{const user=await User.findById(req.user._id).populate("wishlist","name images price discountPrice slug");res.json({success:true,user});});
+exports.updateProfile=ah(<span class="fstat-no" title="function not covered" >as</span>ync(req,res)=&gt;{const{name,phone,avatar}=<span class="cstat-no" title="statement not covered" >req.body;</span>const user=<span class="cstat-no" title="statement not covered" >await User.findByIdAndUpdate(req.user._id,{name,phone,avatar},{new:true,runValidators:true});<span class="cstat-no" title="statement not covered" ></span>res.json({success:true,user});}</span>);
+exports.changePassword=ah(<span class="fstat-no" title="function not covered" >as</span>ync(req,res)=&gt;{const{currentPassword,newPassword}=<span class="cstat-no" title="statement not covered" >req.body;</span>const user=<span class="cstat-no" title="statement not covered" >await User.findById(req.user._id).select("+password");<span class="cstat-no" title="statement not covered" ></span>if(!(await user.matchPassword(currentPassword)))<span class="cstat-no" title="statement not covered" >return res.status(401).json({message:"Current password incorrect"});<span class="cstat-no" title="statement not covered" >u</span></span>ser.password=newPassword;<span class="cstat-no" title="statement not covered" >a</span>wait user.save();<span class="cstat-no" title="statement not covered" >r</span>es.json({success:true,message:"Password changed"});}</span>);
+exports.logout=ah(<span class="fstat-no" title="function not covered" >as</span>ync(req,res)=&gt;{<span class="cstat-no" title="statement not covered" >await User.findByIdAndUpdate(req.user._id,{refreshToken:null});<span class="cstat-no" title="statement not covered" >r</span>es.json({success:true,message:"Logged out"});}</span>);
+exports.addAddress=ah(<span class="fstat-no" title="function not covered" >as</span>ync(req,res)=&gt;{const user=<span class="cstat-no" title="statement not covered" >await User.findById(req.user._id);<span class="cstat-no" title="statement not covered" ></span>if(req.body.isDefault)<span class="cstat-no" title="statement not covered" >user.addresses.forEach(<span class="fstat-no" title="function not covered" >a=</span>&gt;{<span class="cstat-no" title="statement not covered" >a.isDefault=false;}</span>);<span class="cstat-no" title="statement not covered" >u</span></span>ser.addresses.push(req.body);<span class="cstat-no" title="statement not covered" >a</span>wait user.save();<span class="cstat-no" title="statement not covered" >r</span>es.json({success:true,addresses:user.addresses});}</span>);
+exports.deleteAddress=ah(<span class="fstat-no" title="function not covered" >as</span>ync(req,res)=&gt;{const user=<span class="cstat-no" title="statement not covered" >await User.findById(req.user._id);<span class="cstat-no" title="statement not covered" ></span>user.addresses=user.addresses.filter(<span class="fstat-no" title="function not covered" >a=</span>&gt;<span class="cstat-no" title="statement not covered" >a._id.toString()!==req.params.id)</span>;<span class="cstat-no" title="statement not covered" >a</span>wait user.save();<span class="cstat-no" title="statement not covered" >r</span>es.json({success:true,addresses:user.addresses});}</span>);
+exports.toggleWishlist=ah(<span class="fstat-no" title="function not covered" >as</span>ync(req,res)=&gt;{const user=<span class="cstat-no" title="statement not covered" >await User.findById(req.user._id);</span>const pid=<span class="cstat-no" title="statement not covered" >req.params.productId;</span>const idx=<span class="cstat-no" title="statement not covered" >user.wishlist.findIndex(<span class="fstat-no" title="function not covered" >id</span>=&gt;<span class="cstat-no" title="statement not covered" >id.toString()===pid)</span>;</span>let action;<span class="cstat-no" title="statement not covered" >if(idx&gt;-1){<span class="cstat-no" title="statement not covered" >user.wishlist.splice(idx,1);<span class="cstat-no" title="statement not covered" >a</span>ction="removed";}</span>else{<span class="cstat-no" title="statement not covered" >user.wishlist.push(pid);<span class="cstat-no" title="statement not covered" >a</span>ction="added";}<span class="cstat-no" title="statement not covered" ></span>a</span>wait user.save();<span class="cstat-no" title="statement not covered" >r</span>es.json({success:true,message:`Product ${action} to wishlist`,wishlist:user.wishlist,action});}</span>);
+&nbsp;</pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2026-08-05T15:11:21.004Z
+            </div>
+        <script src="../../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../../sorter.js"></script>
+        <script src="../../block-navigation.js"></script>
+    </body>
+</html>
+    

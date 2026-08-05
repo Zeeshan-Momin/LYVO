@@ -1,0 +1,10 @@
+const r=require("express").Router(),c=require("../controllers/productController");
+const{protect,adminOnly,optionalAuth}=require("../middleware/auth"),{upload}=require("../middleware/upload");
+r.get("/",optionalAuth,c.getProducts);r.get("/featured",c.getFeatured);r.get("/search",c.searchSuggestions);r.get("/categories",c.getCategories);
+r.get("/:id",optionalAuth,c.getProduct);r.get("/:id/related",c.getRelated);
+r.post("/",protect,adminOnly,upload.array("images",8),c.createProduct);
+r.put("/:id",protect,adminOnly,upload.array("images",8),c.updateProduct);
+r.delete("/:id",protect,adminOnly,c.deleteProduct);
+r.delete("/:id/image",protect,adminOnly,c.deleteProductImage);
+r.patch("/:id/stock",protect,adminOnly,c.updateStock);
+module.exports=r;

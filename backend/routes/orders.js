@@ -1,0 +1,11 @@
+const r=require("express").Router(),c=require("../controllers/orderController");
+const{protect,adminOnly}=require("../middleware/auth");
+r.post("/",protect,c.placeOrder);r.get("/my",protect,c.getMyOrders);
+r.get("/admin/all",protect,adminOnly,c.getAllOrders);
+r.get("/analytics",protect,adminOnly,c.getAnalytics);
+r.get("/track/:orderNumber",c.trackOrder);
+r.get("/:id",protect,c.getOrder);r.patch("/:id/cancel",protect,c.cancelOrder);
+r.patch("/:id/return",protect,c.requestReturn);
+r.patch("/admin/:id/status",protect,adminOnly,c.updateOrderStatus);
+r.patch("/admin/:id/return-status",protect,adminOnly,c.updateReturnStatus);
+module.exports=r;
