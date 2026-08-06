@@ -1,6 +1,9 @@
 const logger = require("../utils/logger");
 
 const validateEnv = () => {
+  if (process.env.NODE_ENV === "test") {
+    return;
+  }
   const required = [
     "MONGO_URI",
     "JWT_SECRET",

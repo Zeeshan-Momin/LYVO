@@ -1,6 +1,6 @@
 require("./setup");
 const request = require("supertest");
-const app = require("../server");
+const app = require("../app");
 const Product = require("../models/Product");
 const { Category, Coupon } = require("../models/models");
 const User = require("../models/User");
