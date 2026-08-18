@@ -18,7 +18,7 @@ API.interceptors.response.use(r=>r, async err => {
   return Promise.reject(err)
 })
 export const authAPI = {
-  register:d=>API.post("/auth/register",d), login:d=>API.post("/auth/login",d), logout:()=>API.post("/auth/logout"),
+  register:d=>API.post("/auth/register",d), login:d=>API.post("/auth/login",d), loginGoogle:d=>API.post("/auth/google",d), logout:()=>API.post("/auth/logout"),
   getMe:()=>API.get("/auth/me"), updateProfile:d=>API.put("/auth/profile",d), changePassword:d=>API.put("/auth/change-password",d),
   addAddress:d=>API.post("/auth/address",d), deleteAddress:id=>API.delete(`/auth/address/${id}`), toggleWishlist:id=>API.post(`/auth/wishlist/${id}`),
 }

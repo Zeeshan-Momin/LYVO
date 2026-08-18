@@ -390,7 +390,7 @@ export default function InfoPage() {
   }
 
   return (
-    <div className="pt-20 min-h-screen">
+    <div className="page-top min-h-screen">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
         <div className="grid lg:grid-cols-4 gap-8">
           {/* Left Navigation Sidebar */}

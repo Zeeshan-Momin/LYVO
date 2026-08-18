@@ -10,7 +10,7 @@ import HeroShoe from "../components/HeroShoe"
 
 function Hero() {
   return (
-    <section className="relative min-h-[75vh] md:min-h-[85vh] flex items-center overflow-hidden pt-24 pb-12 md:py-20 bg-grid-pattern">
+    <section className="relative min-h-[75vh] md:min-h-[85vh] flex items-center overflow-hidden pt-[116px] pb-12 md:pb-20 bg-grid-pattern">
       {/* Luxury semantic spot lights */}
       <div className="absolute inset-0 hero-glow-1 pointer-events-none" />
       <div className="absolute inset-0 hero-glow-2 pointer-events-none" />

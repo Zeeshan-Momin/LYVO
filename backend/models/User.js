@@ -94,7 +94,35 @@ const userSchema = new mongoose.Schema({
   recentlyViewed: [{ product:{ type:mongoose.Schema.Types.ObjectId, ref:"Product" }, viewedAt:{ type:Date, default:Date.now } }],
   refreshToken: { type: String, select: false },
   lastLogin: Date,
+  loginAttempts: { type: Number, default: 0 },
+  lockUntil: Date,
+  isEmailVerified: { type: Boolean, default: false },
+  emailVerificationToken: String,
+  emailVerificationExpires: Date,
+  passwordResetToken: String,
+  passwordResetExpires: Date,
+  passwordHistory: [{ type: String }]
 }, { timestamps: true });
-userSchema.pre("save", async function(next) { if (!this.isModified("password")) return next(); this.password = await bcrypt.hash(this.password, 12); next(); });
-userSchema.methods.matchPassword = async function(pw) { return bcrypt.compare(pw, this.password); };
+
+userSchema.pre("save", async function(next) { 
+  if (this.isModified("password")) {
+    this.password = await bcrypt.hash(this.password, 12);
+    // Keep history limited to last 3 passwords
+    if (this.passwordHistory) {
+      this.passwordHistory.push(this.password);
+      if (this.passwordHistory.length > 3) {
+        this.passwordHistory.shift();
+      }
+    }
+  }
+  next(); 
+});
+
+userSchema.methods.matchPassword = async function(pw) { 
+  return bcrypt.compare(pw, this.password); 
+};
+
+userSchema.methods.isLocked = function() {
+  return !!(this.lockUntil && this.lockUntil > Date.now());
+};
 module.exports = mongoose.model("User", userSchema);

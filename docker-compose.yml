@@ -16,6 +16,21 @@ services:
       timeout: 5s
       retries: 3
 
+  redis:
+    image: redis:7-alpine
+    container_name: lyvo-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - lyvo-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
   backend:
     build:
       context: ./backend
@@ -26,6 +41,7 @@ services:
     environment:
       - PORT=5000
       - MONGO_URI=mongodb://mongodb:27017/lyvo
+      - REDIS_URL=redis://redis:6379
       - JWT_SECRET=super_secret_key_change_me_in_prod_12345!
       - JWT_REFRESH_SECRET=refresh_super_secret_key_change_me_in_prod_12345!
       - NODE_ENV=production
@@ -39,6 +55,8 @@ services:
       - backend-uploads:/app/uploads
     depends_on:
       mongodb:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - lyvo-network
@@ -57,6 +75,7 @@ services:
 
 volumes:
   mongo-data:
+  redis-data:
   backend-logs:
   backend-uploads:
 

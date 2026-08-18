@@ -19,10 +19,18 @@ function FilterPanel({ filters, onFilterChange, categories, onClose, isMobile=fa
       <div className="flex items-center justify-between"><h3 className="font-semibold text-sm tracking-widest uppercase">Filters</h3><button onClick={clear} className="text-xs text-acid hover:underline">Clear All</button></div>
       <div><p className="text-white/50 text-xs tracking-wider uppercase mb-3">Category</p>
         <div className="space-y-2">{categories.map(c=>(
-          <label key={c._id} className="flex items-center gap-2.5 cursor-pointer group" onClick={()=>set("category",c._id)}>
+          <div
+            key={c._id}
+            role="checkbox"
+            aria-checked={filters.category===c._id}
+            tabIndex={0}
+            onKeyDown={e=>{if(e.key===" "||e.key==="Enter"){e.preventDefault();set("category",c._id)}}}
+            onClick={()=>set("category",c._id)}
+            className="flex items-center gap-2.5 cursor-pointer group outline-none rounded focus-visible:ring-1 focus-visible:ring-acid/40"
+          >
             <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${filters.category===c._id?"bg-acid border-acid":"border-white/20 group-hover:border-acid/50"}`}>{filters.category===c._id && <div className="w-2 h-2 bg-dark-900 rounded-sm"/>}</div>
             <span className={`text-sm transition-colors ${filters.category===c._id?"text-acid":"text-white/60 group-hover:text-white"}`}>{c.name}</span>
-          </label>
+          </div>
         ))}</div>
       </div>
       <div><p className="text-white/50 text-xs tracking-wider uppercase mb-3">Gender</p>
@@ -32,14 +40,22 @@ function FilterPanel({ filters, onFilterChange, categories, onClose, isMobile=fa
         <div className="grid grid-cols-4 gap-2">{SIZES.map(s=><button key={s} onClick={()=>set("size",s)} className={`py-1.5 rounded-lg text-xs font-medium transition-all ${filters.size===s?"bg-acid text-dark-900":"bg-dark-700 text-white/50 hover:bg-dark-600 hover:text-white"}`}>{s.replace("UK ","")}</button>)}</div>
       </div>
       <div><p className="text-white/50 text-xs tracking-wider uppercase mb-3">Max Price: ₹{(filters.maxPrice||50000).toLocaleString()}</p>
-        <input type="range" min={0} max={50000} step={500} value={filters.maxPrice||50000} onChange={e=>onFilterChange({maxPrice:+e.target.value})} className="w-full accent-acid"/>
+        <input type="range" min={0} max={50000} step={500} value={filters.maxPrice||50000} onChange={e=>onFilterChange({maxPrice:+e.target.value})} className="w-full accent-acid outline-none" aria-label="Max Price filter" aria-valuemin="0" aria-valuemax="50000" aria-valuenow={filters.maxPrice||50000}/>
       </div>
       <div><p className="text-white/50 text-xs tracking-wider uppercase mb-3">Quick Filters</p>
         {[["isNew","New Arrivals"],["isFeatured","Featured"],["isBestSeller","Best Sellers"]].map(([k,l])=>(
-          <label key={k} className="flex items-center gap-2.5 cursor-pointer group mb-2" onClick={()=>set(k,true)}>
+          <div
+            key={k}
+            role="checkbox"
+            aria-checked={!!filters[k]}
+            tabIndex={0}
+            onKeyDown={e=>{if(e.key===" "||e.key==="Enter"){e.preventDefault();set(k,true)}}}
+            onClick={()=>set(k,true)}
+            className="flex items-center gap-2.5 cursor-pointer group mb-2 outline-none rounded focus-visible:ring-1 focus-visible:ring-acid/40"
+          >
             <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${filters[k]?"bg-acid border-acid":"border-white/20 group-hover:border-acid/50"}`}>{filters[k] && <div className="w-2 h-2 bg-dark-900 rounded-sm"/>}</div>
             <span className={`text-sm ${filters[k]?"text-acid":"text-white/60"}`}>{l}</span>
-          </label>
+          </div>
         ))}
       </div>
       {isMobile && <button onClick={onClose} className="btn-primary w-full py-3">Apply Filters</button>}
@@ -113,7 +129,7 @@ export default function Products() {
   useEffect(() => { fetchProducts() }, [fetchProducts])
 
   return (
-    <div className="pt-20 min-h-screen">
+    <div className="page-top min-h-screen">
       <div className="border-b border-white/5 bg-dark-800/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10"><p className="tag-line mb-2">Our Collection</p><h1 className="section-title">{filters.isNew?"New Drops":filters.isFeatured?"Featured":filters.gender?filters.gender.toUpperCase():"All Sneakers"}</h1></div>
       </div>

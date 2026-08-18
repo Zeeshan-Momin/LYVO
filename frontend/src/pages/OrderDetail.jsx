@@ -26,14 +26,14 @@ export default function OrderDetail() {
     } catch(e) { toast.error(e.response?.data?.message||"Failed") } finally { setSubmitting(false) }
   }
 
-  if (loading) return <div className="pt-20"><Loading/></div>
-  if (!order) return <div className="pt-20 text-center py-20"><h2 className="font-display text-3xl mb-4">Order not found</h2><Link to="/orders" className="btn-primary">Back to Orders</Link></div>
+  if (loading) return <div className="page-top"><Loading/></div>
+  if (!order) return <div className="page-top text-center py-20"><h2 className="font-display text-3xl mb-4">Order not found</h2><Link to="/orders" className="btn-primary">Back to Orders</Link></div>
   const curIdx = PROG.indexOf(order.status)
   const canCancel = ["pending","confirmed"].includes(order.status)
   const withinReturnWindow = order.deliveredAt && (Date.now()-new Date(order.deliveredAt).getTime()) <= RETURN_WINDOW_DAYS*24*60*60*1000
   const canReturn = order.status==="delivered" && withinReturnWindow
   return (
-    <div className="pt-20 min-h-screen">
+    <div className="page-top min-h-screen">
       {modal && <CancelReturnModal type={modal} onClose={()=>setModal(null)} onSubmit={handleSubmit} submitting={submitting}/>}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
         <div className="flex items-center justify-between mb-8 flex-wrap gap-4">

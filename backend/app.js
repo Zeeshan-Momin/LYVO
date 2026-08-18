@@ -7,6 +7,7 @@ const compression = require("compression");
 const mongoSanitize = require("express-mongo-sanitize");
 const Sentry = require("@sentry/node");
 const logger = require("./utils/logger");
+const crypto = require("crypto");
 
 const app = express();
 
@@ -45,6 +46,18 @@ app.use(
   })
 );
 
+// Prometheus counter metrics trackers
+let totalRequests = 0;
+const statusCounts = {};
+
+// Request tracing ID middleware
+app.use((req, res, next) => {
+  req.id = req.headers["x-request-id"] || crypto.randomUUID();
+  res.setHeader("X-Request-Id", req.id);
+  totalRequests++;
+  next();
+});
+
 app.use((req, res, next) => {
   res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
   next();
@@ -60,10 +73,13 @@ app.use((req, res, next) => {
   const start = Date.now();
   res.on("finish", () => {
     const duration = Date.now() - start;
-    logger.info(`${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms`, {
+    const status = res.statusCode;
+    statusCounts[status] = (statusCounts[status] || 0) + 1;
+    logger.info(`${req.method} ${req.originalUrl} ${status} - ${duration}ms`, {
+      requestId: req.id,
       method: req.method,
       url: req.originalUrl,
-      status: res.statusCode,
+      status: status,
       ip: req.ip,
       duration
     });
@@ -78,6 +94,33 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads"), {
 }));
 
 app.get("/api/live", (_, res) => res.status(200).json({ status: "alive" }));
+
+app.get("/metrics", (req, res) => {
+  res.set("Content-Type", "text/plain; version=0.0.4; charset=utf-8");
+  let body = "";
+  body += `# HELP lyvo_http_requests_total Total number of HTTP requests\n`;
+  body += `# TYPE lyvo_http_requests_total counter\n`;
+  body += `lyvo_http_requests_total ${totalRequests}\n\n`;
+  
+  body += `# HELP lyvo_http_response_status_total Total number of HTTP responses by status code\n`;
+  body += `# TYPE lyvo_http_response_status_total counter\n`;
+  Object.keys(statusCounts).forEach((status) => {
+    body += `lyvo_http_response_status_total{status="${status}"} ${statusCounts[status]}\n`;
+  });
+  
+  const memory = process.memoryUsage();
+  body += `\n# HELP lyvo_memory_rss_bytes Resident set size memory\n`;
+  body += `# TYPE lyvo_memory_rss_bytes gauge\n`;
+  body += `lyvo_memory_rss_bytes ${memory.rss}\n`;
+  body += `\n# HELP lyvo_memory_heap_total_bytes Heap total memory\n`;
+  body += `# TYPE lyvo_memory_heap_total_bytes gauge\n`;
+  body += `lyvo_memory_heap_total_bytes ${memory.heapTotal}\n`;
+  body += `\n# HELP lyvo_memory_heap_used_bytes Heap used memory\n`;
+  body += `# TYPE lyvo_memory_heap_used_bytes gauge\n`;
+  body += `lyvo_memory_heap_used_bytes ${memory.heapUsed}\n`;
+  
+  res.send(body);
+});
 
 app.get("/api/ready", async (_, res) => {
   const mongoose = require("mongoose");

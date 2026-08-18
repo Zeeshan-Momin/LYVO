@@ -9,9 +9,9 @@ const SC = {pending:"bg-yellow-500/15 text-yellow-400 border-yellow-500/25",conf
 export function OrderHistory() {
   const [orders,setOrders]=useState([]), [loading,setLoading]=useState(true)
   useEffect(() => { orderAPI.getMyOrders({limit:20}).then(({data})=>setOrders(data.orders||[])).catch(()=>{}).finally(()=>setLoading(false)) }, [])
-  if (loading) return <div className="pt-20"><Loading/></div>
+  if (loading) return <div className="page-top"><Loading/></div>
   return (
-    <div className="pt-20 min-h-screen">
+    <div className="page-top min-h-screen">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
         <h1 className="font-display text-4xl tracking-wider mb-8">My Orders</h1>
         {orders.length===0 ? (

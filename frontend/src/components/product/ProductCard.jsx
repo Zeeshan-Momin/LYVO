@@ -8,7 +8,7 @@ import { getOptimizedImageUrl } from "../../utils/image"
 import toast from "react-hot-toast"
 
 function ProductCard({ product, index = 0 }) {
-  const { toggleWishlist, isWishlisted } = useAuth()
+  const { toggleWishlist, isWishlisted, user, triggerAuthRedirect } = useAuth()
   const { addItem } = useCart()
   const [hovering, setHovering] = useState(false)
   const wishlisted = isWishlisted(product._id)
@@ -21,6 +21,15 @@ function ProductCard({ product, index = 0 }) {
     e.preventDefault(); e.stopPropagation()
     if (!inStock) { toast.error("Out of stock"); return }
     if (!firstSize) { toast.error("Select size on product page"); return }
+    if (!user) {
+      triggerAuthRedirect({
+        action: "quick_add",
+        route: window.location.pathname + window.location.search,
+        scroll: window.scrollY,
+        payload: { product, size: firstSize, color: "Default", qty: 1 }
+      });
+      return;
+    }
     addItem(product, firstSize)
   }
   const handleWishlist = (e) => { e.preventDefault(); e.stopPropagation(); toggleWishlist(product._id) }

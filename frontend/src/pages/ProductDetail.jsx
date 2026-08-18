@@ -30,7 +30,7 @@ function Gallery({ images=[] }) {
 
 function Reviews({ productId }) {
   const [reviews,setReviews]=useState([]), [loading,setLoading]=useState(true)
-  const { user } = useAuth()
+  const { user, triggerAuthRedirect } = useAuth()
   const [form,setForm]=useState({rating:5,title:"",comment:""}), [submitting,setSubmitting]=useState(false), [showForm,setShowForm]=useState(false)
   useEffect(() => { reviewAPI.getAll(productId,{limit:10}).then(({data})=>setReviews(data.reviews||[])).catch(()=>{}).finally(()=>setLoading(false)) }, [productId])
   const submitReview = async (e) => {
@@ -42,7 +42,24 @@ function Reviews({ productId }) {
   }
   return (
     <div className="mt-12">
-      <div className="flex items-center justify-between mb-6"><h2 className="font-display text-3xl tracking-wider">Reviews</h2>{user && <button onClick={()=>setShowForm(p=>!p)} className="btn-outline py-2 px-4 text-sm">Write a Review</button>}</div>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="font-display text-3xl tracking-wider">Reviews</h2>
+        {!user ? (
+          <button 
+            type="button"
+            onClick={() => triggerAuthRedirect({
+              action: "add_review",
+              route: window.location.pathname + window.location.search,
+              scroll: window.scrollY
+            })} 
+            className="btn-outline py-2 px-4 text-sm"
+          >
+            Login to write a Review
+          </button>
+        ) : (
+          <button onClick={()=>setShowForm(p=>!p)} className="btn-outline py-2 px-4 text-sm">Write a Review</button>
+        )}
+      </div>
       {showForm && (
         <form onSubmit={submitReview} className="card p-6 mb-8 space-y-4">
           <div><label className="label">Rating</label><div className="flex gap-2">{[1,2,3,4,5].map(n=><button key={n} type="button" onClick={()=>setForm(p=>({...p,rating:n}))}><FiStar size={24} className={n<=form.rating?"text-gold fill-gold":"text-white/20"}/></button>)}</div></div>
@@ -66,40 +83,146 @@ function Reviews({ productId }) {
   )
 }
 
+function FrequentlyBoughtTogether({ currentProduct, relatedProducts, onAddBundle }) {
+  const companion = relatedProducts[0];
+  const [includeCompanion, setIncludeCompanion] = useState(true);
+  
+  if (!companion) return null;
+  
+  const currentPrice = currentProduct.discountPrice || currentProduct.price;
+  const companionPrice = companion.discountPrice || companion.price;
+  const totalPrice = currentPrice + (includeCompanion ? companionPrice : 0);
+  
+  return (
+    <div className="card p-6 border border-white/8 bg-dark-800 rounded-2xl mt-12">
+      <h3 className="font-display text-xl tracking-wider uppercase mb-4 text-white">Frequently Bought Together</h3>
+      <div className="flex flex-col sm:flex-row items-center gap-6">
+        <div className="flex items-center gap-4">
+          <img src={getOptimizedImageUrl(currentProduct.images?.[0]?.url, 150)} alt="" className="w-16 h-16 rounded-xl object-cover bg-dark-700" />
+          <div>
+            <p className="text-xs text-white/50 truncate max-w-[150px]">{currentProduct.name}</p>
+            <p className="text-sm font-semibold text-white">₹{currentPrice?.toLocaleString()}</p>
+          </div>
+        </div>
+        <span className="text-acid font-bold text-xl">+</span>
+        <div className="flex items-center gap-4">
+          <input
+            type="checkbox"
+            checked={includeCompanion}
+            onChange={(e) => setIncludeCompanion(e.target.checked)}
+            className="w-4 h-4 rounded text-acid bg-dark-700 border-white/20 focus:ring-0 focus:ring-offset-0"
+          />
+          <img src={getOptimizedImageUrl(companion.images?.[0]?.url, 150)} alt="" className="w-16 h-16 rounded-xl object-cover bg-dark-700" />
+          <div>
+            <p className="text-xs text-white/50 truncate max-w-[150px]">{companion.name}</p>
+            <p className="text-sm font-semibold text-white">₹{companionPrice?.toLocaleString()}</p>
+          </div>
+        </div>
+        <div className="sm:ml-auto text-center sm:text-right space-y-2">
+          <p className="text-[10px] uppercase text-white/40 tracking-wider">Total Combo Price</p>
+          <p className="font-display text-2xl text-acid">₹{totalPrice.toLocaleString()}</p>
+          <button
+            onClick={() => onAddBundle(includeCompanion ? companion : null)}
+            className="btn-primary py-2 px-5 text-xs uppercase tracking-wider font-semibold hover:shadow-[0_0_15px_rgba(204,255,0,0.3)] hover:scale-[1.02] transition-all bg-acid text-dark-900 border-none"
+          >
+            Add Bundle
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ProductDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { toggleWishlist, isWishlisted } = useAuth()
+  const { toggleWishlist, isWishlisted, user, triggerAuthRedirect } = useAuth()
   const { addItem } = useCart()
   const [product,setProduct]=useState(null), [related,setRelated]=useState([]), [loading,setLoading]=useState(true)
   const [selSize,setSelSize]=useState(""), [selColor,setSelColor]=useState(""), [qty,setQty]=useState(1), [addedAnim,setAddedAnim]=useState(false)
+  const [recentlyViewed, setRecentlyViewed] = useState([])
 
   useEffect(() => {
     setLoading(true)
-    productAPI.getOne(id).then(({data})=>{setProduct(data.product);setSelColor(data.product.colors?.[0]?.name||"")}).catch(()=>toast.error("Product not found")).finally(()=>setLoading(false))
+    productAPI.getOne(id).then(({data})=>{
+      setProduct(data.product);
+      setSelColor(data.product.colors?.[0]?.name||"");
+
+      // Track recently viewed
+      const raw = localStorage.getItem("lyvo_recently_viewed") || "[]";
+      let list = JSON.parse(raw);
+      list = list.filter(pid => pid !== data.product._id);
+      list.unshift(data.product._id);
+      localStorage.setItem("lyvo_recently_viewed", JSON.stringify(list.slice(0, 5)));
+    }).catch(()=>toast.error("Product not found")).finally(()=>setLoading(false))
     productAPI.getRelated(id).then(({data})=>setRelated(data.products||[])).catch(()=>{})
     window.scrollTo({top:0,behavior:"smooth"})
   }, [id])
 
-  if (loading) return <div className="pt-20"><Loading fullscreen/></div>
-  if (!product) return <div className="pt-20 text-center py-20"><h2 className="font-display text-4xl mb-4">Not found</h2><Link to="/products" className="btn-primary">Back to Shop</Link></div>
+  useEffect(() => {
+    if (related.length > 0) {
+      const raw = localStorage.getItem("lyvo_recently_viewed") || "[]";
+      const ids = JSON.parse(raw).filter(pid => pid !== id);
+      const matched = related.filter(p => ids.includes(p._id));
+      setRecentlyViewed(matched.length > 0 ? matched : related.slice(1, 4));
+    }
+  }, [related, id]);
+
+  if (loading) return <div className="page-top"><Loading fullscreen/></div>
+  if (!product) return <div className="page-top text-center py-20"><h2 className="font-display text-4xl mb-4">Not found</h2><Link to="/products" className="btn-primary">Back to Shop</Link></div>
 
   const price=product.discountPrice||product.price, hasDiscount=product.discountPrice&&product.discountPrice<product.price
   const wishlisted=isWishlisted(product._id), sizeObj=product.sizes?.find(s=>s.size===selSize), inStock=sizeObj?sizeObj.stock>0:product.totalStock>0
 
   const handleAdd = () => {
     if (!selSize) { toast.error("Please select a size"); return }
+    if (!user) {
+      triggerAuthRedirect({
+        action: "add_to_cart",
+        route: window.location.pathname + window.location.search,
+        scroll: window.scrollY,
+        payload: { product, size: selSize, color: selColor, qty }
+      });
+      return;
+    }
     addItem(product,selSize,selColor,qty); setAddedAnim(true); setTimeout(()=>setAddedAnim(false),2000)
   }
 
   const handleBuyNow = () => {
     if (!selSize) { toast.error("Please select a size"); return }
+    if (!user) {
+      triggerAuthRedirect({
+        action: "buy_now",
+        route: window.location.pathname + window.location.search,
+        scroll: window.scrollY,
+        payload: { product, size: selSize, color: selColor, qty }
+      });
+      return;
+    }
     addItem(product,selSize,selColor,qty)
     navigate("/checkout")
   }
 
+  const handleAddBundle = (companion) => {
+    if (!selSize) { toast.error("Please select a size first"); return }
+    if (!user) {
+      triggerAuthRedirect({
+        action: "add_to_cart",
+        route: window.location.pathname + window.location.search,
+        scroll: window.scrollY,
+        payload: { product, size: selSize, color: selColor, qty: 1 }
+      });
+      return;
+    }
+    addItem(product, selSize, selColor, 1)
+    if (companion) {
+      addItem(companion, companion.sizes?.[0]?.size || "UK 8", "Default", 1)
+    }
+    toast.success("Combo added to cart!")
+  }
+
   return (
-    <div className="pt-20 min-h-screen">
+    <div className="page-top min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
         <div className="flex items-center gap-2 text-white/30 text-xs font-mono mb-8"><Link to="/" className="hover:text-acid">Home</Link><span>/</span><Link to="/products" className="hover:text-acid">Shop</Link><span>/</span><span className="text-white/60">{product.name}</span></div>
         <div className="grid lg:grid-cols-2 gap-12 xl:gap-20">
@@ -150,8 +273,14 @@ export default function ProductDetail() {
             {product.features?.length>0 && <div><h3 className="font-semibold mb-3">Features</h3><ul className="space-y-2">{product.features.map((f,i)=><li key={i} className="flex items-center gap-2.5 text-sm text-white/60"><FiCheck size={14} className="text-acid shrink-0"/>{f}</li>)}</ul></div>}
           </div>
         </div>
+
+        <FrequentlyBoughtTogether currentProduct={product} relatedProducts={related} onAddBundle={handleAddBundle} />
+
         <Reviews productId={product._id}/>
+        
         {related.length>0 && <div className="mt-16"><h2 className="font-display text-3xl tracking-wider mb-8">You May Also Like</h2><div className="grid grid-cols-2 md:grid-cols-4 gap-5">{related.slice(0,4).map((p,i)=><ProductCard key={p._id} product={p} index={i}/>)}</div></div>}
+        
+        {recentlyViewed.length>0 && <div className="mt-16"><h2 className="font-display text-3xl tracking-wider mb-8">Recently Viewed</h2><div className="grid grid-cols-2 md:grid-cols-4 gap-5">{recentlyViewed.slice(0,4).map((p,i)=><ProductCard key={p._id} product={p} index={i}/>)}</div></div>}
       </div>
     </div>
   )

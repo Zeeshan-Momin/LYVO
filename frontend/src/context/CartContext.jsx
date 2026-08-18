@@ -1,9 +1,47 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react"
+import { useNavigate } from "react-router-dom"
+import { useAuth } from "./AuthContext"
 import toast from "react-hot-toast"
+
 const Ctx = createContext(null), KEY = "lyvo_cart"
+
 export function CartProvider({ children }) {
   const [items,setItems]=useState(()=>{ try{ return JSON.parse(localStorage.getItem(KEY))||[] }catch{ return [] } })
   const [isOpen,setIsOpen]=useState(false)
+  const { user } = useAuth()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!user) return;
+    const raw = localStorage.getItem("lyvo_pending_action");
+    if (!raw) return;
+    try {
+      const pending = JSON.parse(raw);
+      if (pending.action === "add_to_cart" || pending.action === "buy_now" || pending.action === "quick_add") {
+        localStorage.removeItem("lyvo_pending_action");
+        const { product, size, color, qty } = pending.payload;
+        
+        // Execute cart insertion
+        addItem(product, size, color || "Default", qty || 1);
+        
+        // Restore scroll position
+        setTimeout(() => {
+          if (pending.scroll) {
+            window.scrollTo({ top: pending.scroll, behavior: "smooth" });
+          }
+        }, 400);
+
+        // Redirect appropriately
+        if (pending.action === "buy_now") {
+          navigate("/checkout");
+        } else {
+          navigate(pending.route || "/");
+        }
+      }
+    } catch (e) {
+      console.error("Failed executing pending cart action:", e);
+    }
+  }, [user, navigate]);
   const [couponCode, setCouponCode] = useState("")
   const [couponDiscount, setCouponDiscount] = useState(0)
   useEffect(()=>{ localStorage.setItem(KEY,JSON.stringify(items)) },[items])

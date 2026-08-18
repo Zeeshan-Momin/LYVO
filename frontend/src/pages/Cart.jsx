@@ -32,7 +32,7 @@ export default function Cart() {
   }
 
   if (itemCount===0) return (
-    <div className="pt-24 min-h-screen flex flex-col items-center justify-center gap-6 text-center px-4">
+    <div className="page-top min-h-screen flex flex-col items-center justify-center gap-6 text-center px-4">
       <div className="w-24 h-24 rounded-full bg-dark-700 flex items-center justify-center"><FiShoppingBag size={40} className="text-white/20"/></div>
       <div><h2 className="font-display text-4xl tracking-wider mb-2">Cart is Empty</h2><p className="text-white/40">Add some sneakers and start your journey</p></div>
       <Link to="/products" className="btn-primary flex items-center gap-2">Shop Now <FiArrowRight size={16}/></Link>
@@ -40,7 +40,7 @@ export default function Cart() {
   )
 
   return (
-    <div className="pt-20 min-h-screen">
+    <div className="page-top min-h-screen">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
         <div className="flex items-center justify-between mb-8"><h1 className="font-display text-4xl tracking-wider">Your Cart</h1><span className="text-white/40 text-sm">{itemCount} item{itemCount!==1?"s":""}</span></div>
         <div className="grid lg:grid-cols-3 gap-8">

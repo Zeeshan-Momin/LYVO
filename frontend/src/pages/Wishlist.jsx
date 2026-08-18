@@ -14,9 +14,9 @@ export default function Wishlist() {
     if (!ids.length) { setLoading(false); return }
     Promise.all(ids.slice(0,20).map(id=>productAPI.getOne(id).then(r=>r.data.product).catch(()=>null))).then(prods=>setProducts(prods.filter(Boolean))).finally(()=>setLoading(false))
   }, [user?.wishlist?.length])
-  if (loading) return <div className="pt-20"><Loading/></div>
+  if (loading) return <div className="page-top"><Loading/></div>
   return (
-    <div className="pt-20 min-h-screen">
+    <div className="page-top min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
         <div className="flex items-center justify-between mb-8"><h1 className="font-display text-4xl tracking-wider">Wishlist{products.length>0 && <span className="ml-3 text-acid">{products.length}</span>}</h1><Link to="/products" className="btn-outline flex items-center gap-2 py-2.5 px-5 text-sm">Shop More <FiArrowRight size={14}/></Link></div>
         {products.length===0 ? (

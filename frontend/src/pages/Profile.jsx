@@ -19,7 +19,7 @@ export default function Profile() {
   const delAddress = async (id) => { try { await authAPI.deleteAddress(id); await fetchMe(); toast.success("Address removed") } catch { toast.error("Failed") } }
 
   return (
-    <div className="pt-20 min-h-screen">
+    <div className="page-top min-h-screen">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
         <div className="flex items-center gap-5 mb-10"><div className="w-16 h-16 rounded-2xl bg-acid/20 border border-acid/30 flex items-center justify-center font-display text-acid text-3xl">{user?.name?.[0]?.toUpperCase()}</div><div><h1 className="font-display text-3xl tracking-wider">{user?.name}</h1><p className="text-white/40 text-sm">{user?.email}</p></div></div>
         <div className="flex gap-2 mb-8 border-b border-white/8 pb-1">{[["profile","Profile"],["security","Security"],["address","Addresses"]].map(([id,l])=><button key={id} onClick={()=>setTab(id)} className={`pb-3 px-4 text-sm font-medium transition-all border-b-2 -mb-px ${tab===id?"border-acid text-acid":"border-transparent text-white/40 hover:text-white"}`}>{l}</button>)}</div>

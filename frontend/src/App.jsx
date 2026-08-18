@@ -1,6 +1,6 @@
 import { useEffect, lazy, Suspense } from "react"
-import { Routes, Route, Navigate, Outlet } from "react-router-dom"
-import { Toaster } from "react-hot-toast"
+import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom"
+import { Toaster, toast } from "react-hot-toast"
 import { analyticsAPI } from "./api"
 import { AuthProvider, useAuth } from "./context/AuthContext"
 import { ThemeProvider } from "./context/ThemeContext"
@@ -8,6 +8,9 @@ import { CartProvider } from "./context/CartContext"
 import Navbar  from "./components/common/Navbar"
 import Footer  from "./components/common/Footer"
 import Loading from "./components/common/Loading"
+import AnnouncementBanner from "./components/common/AnnouncementBanner"
+import ChatbotFloat from "./components/common/ChatbotFloat"
+import OnboardingWalkthrough from "./components/common/OnboardingWalkthrough"
 const Home = lazy(() => import("./pages/Home"))
 const Products = lazy(() => import("./pages/Products"))
 const ProductDetail = lazy(() => import("./pages/ProductDetail"))
@@ -29,10 +32,19 @@ const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics").then(m 
 const AdminCategories = lazy(() => import("./pages/admin/AdminCategories"))
 const AdminCoupons = lazy(() => import("./pages/admin/AdminCoupons"))
 
-function PrivateRoute() { const{user,loading}=useAuth(); if(loading) return <Loading fullscreen/>; return user?<Outlet/>:<Navigate to="/login" replace/> }
+function PrivateRoute() {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+  if (loading) return <Loading fullscreen />;
+  if (!user) {
+    toast.error("🔑 Sign in required to access this area.");
+    return <Navigate to="/login" state={{ from: location.pathname + location.search }} replace />;
+  }
+  return <Outlet />;
+}
 function AdminRoute() { const{user,loading,isAdmin}=useAuth(); if(loading) return <Loading fullscreen/>; if(!user) return <Navigate to="/login" replace/>; if(!isAdmin) return <Navigate to="/" replace/>; return <Outlet/> }
 function GuestRoute() { const{user,loading}=useAuth(); if(loading) return <Loading fullscreen/>; return !user?<Outlet/>:<Navigate to="/" replace/> }
-function UserLayout() { return <div className="min-h-screen flex flex-col"><Navbar/><main className="flex-1"><Outlet/></main><Footer/></div> }
+function UserLayout() { return <div className="min-h-screen flex flex-col"><AnnouncementBanner /><a href="#main-content" className="skip-nav">Skip to main content</a><Navbar/><main id="main-content" tabIndex="-1" className="flex-1 outline-none"><Outlet/></main><Footer/><ChatbotFloat/><OnboardingWalkthrough/></div> }
 
 export default function App() {
   useEffect(() => {
