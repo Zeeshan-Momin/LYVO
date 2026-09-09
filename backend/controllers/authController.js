@@ -255,13 +255,14 @@ exports.googleLogin = ah(async (req, res) => {
   }
 
   try {
-    let email, name;
+    let email, name, googleId, avatar = "";
     if (idToken === "mock-google-id-token") {
-      if (process.env.NODE_ENV === "production") {
-        return res.status(400).json({ message: "Mock Google Login disabled in production" });
+      if (process.env.NODE_ENV !== "test") {
+        return res.status(400).json({ message: "Mock Google Login only allowed in testing" });
       }
       email = "google-demo-user@lyvo.com";
       name = "Google Demo User";
+      googleId = "mock-google-id";
     } else {
       if (!process.env.GOOGLE_CLIENT_ID) {
         return res.status(500).json({ message: "Google OAuth Client ID not configured" });
@@ -280,20 +281,37 @@ exports.googleLogin = ah(async (req, res) => {
 
       email = payload.email.toLowerCase();
       name = payload.name || email.split("@")[0];
+      googleId = payload.sub;
+      avatar = payload.picture || "";
     }
 
-    let user = await User.findOne({ email }).select("+refreshToken");
+    let user = await User.findOne({ $or: [{ googleId }, { email }] }).select("+refreshToken");
     if (!user) {
       const crypto = require("crypto");
       const randomPassword = crypto.randomBytes(16).toString("hex");
       user = await User.create({
         name,
         email,
+        googleId,
+        avatar,
         password: randomPassword,
         phone: "",
         isEmailVerified: true
       });
       logger.info(`AUDIT: Auto-created Google login profile. Email: ${email}`, { userId: user._id });
+    } else {
+      let modified = false;
+      if (!user.googleId) {
+        user.googleId = googleId;
+        modified = true;
+      }
+      if (!user.avatar && avatar) {
+        user.avatar = avatar;
+        modified = true;
+      }
+      if (modified) {
+        await user.save({ validateBeforeSave: false });
+      }
     }
 
     if (!user.isActive) {

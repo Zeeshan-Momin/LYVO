@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom"
 import { motion } from "framer-motion"
 import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight, FiUser, FiShield } from "react-icons/fi"
 import { useAuth } from "../context/AuthContext"
-import { auth, googleProvider, signInWithPopup } from "../config/firebase"
+import { auth, googleProvider, signInWithPopup, GoogleAuthProvider } from "../config/firebase"
 import toast from "react-hot-toast"
 
 /* ─── Auth pages always use a dark cinematic backdrop ─────────
@@ -70,21 +70,21 @@ export function Login() {
   const handleGoogle = async () => {
     setLoading(true)
     try {
-      let idToken
-      const isDummy =
-        !import.meta.env.VITE_FIREBASE_API_KEY ||
-        import.meta.env.VITE_FIREBASE_API_KEY.includes("dummy")
-      if (isDummy) {
-        idToken = "mock-google-id-token"
-      } else {
-        const result = await signInWithPopup(auth, googleProvider)
-        idToken = await result.user.getIdToken()
+      const result = await signInWithPopup(auth, googleProvider)
+      const credential = GoogleAuthProvider.credentialFromResult(result)
+      const idToken = credential?.idToken
+      if (!idToken) {
+        throw new Error("Failed to retrieve Google credentials.")
       }
       const user = await loginGoogle(idToken)
       toast.success(`Authenticated as ${user.name.split(" ")[0]}! 🚀`)
       navigate(user.role === "admin" ? "/admin" : from, { replace: true })
     } catch (err) {
-      toast.error(err.message || "Google authentication failed")
+      if (err.code === "auth/popup-closed-by-user") {
+        toast.error("Sign-in cancelled by user")
+      } else {
+        toast.error(err.message || "Google authentication failed")
+      }
     } finally {
       setLoading(false)
     }

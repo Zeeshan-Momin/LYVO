@@ -11,7 +11,7 @@ import axios from "axios"
 const STEPS = ["Address","Payment","Review"]
 const PAY_METHODS = [{id:"card",label:"Credit / Debit Card",icon:"💳"},{id:"upi",label:"UPI",icon:"📱"},{id:"netbanking",label:"Net Banking",icon:"🏦"},{id:"cod",label:"Cash on Delivery",icon:"💵"}]
 const EMPTY_ADDR = {fullName:"",phone:"",email:"",houseNo:"",street:"",landmark:"",zipCode:"",city:"",state:"",country:"India",addressType:"Home",saveAddress:false}
-const isDummyRazorpay = !import.meta.env.VITE_RAZORPAY_KEY_ID || import.meta.env.VITE_RAZORPAY_KEY_ID.includes("xxxx") || import.meta.env.VITE_RAZORPAY_KEY_ID.includes("test");
+const isDummyRazorpay = !import.meta.env.VITE_RAZORPAY_KEY_ID || import.meta.env.VITE_RAZORPAY_KEY_ID.includes("xxxx") || import.meta.env.VITE_RAZORPAY_KEY_ID.includes("mock") || import.meta.env.VITE_RAZORPAY_KEY_ID === "rzp_test_xxxxxxxxxxxxxxxx";
 
 const POPULAR_BANKS = [
   { id: "sbi", name: "SBI" },

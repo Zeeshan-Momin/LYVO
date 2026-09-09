@@ -101,13 +101,13 @@ app.get("/metrics", (req, res) => {
   body += `# HELP lyvo_http_requests_total Total number of HTTP requests\n`;
   body += `# TYPE lyvo_http_requests_total counter\n`;
   body += `lyvo_http_requests_total ${totalRequests}\n\n`;
-  
+
   body += `# HELP lyvo_http_response_status_total Total number of HTTP responses by status code\n`;
   body += `# TYPE lyvo_http_response_status_total counter\n`;
   Object.keys(statusCounts).forEach((status) => {
     body += `lyvo_http_response_status_total{status="${status}"} ${statusCounts[status]}\n`;
   });
-  
+
   const memory = process.memoryUsage();
   body += `\n# HELP lyvo_memory_rss_bytes Resident set size memory\n`;
   body += `# TYPE lyvo_memory_rss_bytes gauge\n`;
@@ -118,7 +118,7 @@ app.get("/metrics", (req, res) => {
   body += `\n# HELP lyvo_memory_heap_used_bytes Heap used memory\n`;
   body += `# TYPE lyvo_memory_heap_used_bytes gauge\n`;
   body += `lyvo_memory_heap_used_bytes ${memory.heapUsed}\n`;
-  
+
   res.send(body);
 });
 
@@ -158,6 +158,10 @@ app.use("/api/upload", require("./routes/upload"));
 app.use("/api/reviews", require("./routes/reviews"));
 app.use("/api/coupons", require("./routes/coupons"));
 app.use("/api/payment", require("./routes/payment"));
+const paymentController = require("./controllers/paymentController");
+const { protect } = require("./middleware/auth");
+app.post("/api/create-order", protect, paymentController.createRazorpayOrder);
+app.post("/api/verify-payment", protect, paymentController.verifyRazorpayPayment);
 app.use("/api/analytics", require("./routes/analytics"));
 app.use("*", (req, res) => res.status(404).json({ message: `${req.originalUrl} not found` }));
 

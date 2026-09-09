@@ -75,6 +75,7 @@ const userSchema = new mongoose.Schema({
     select: false 
   },
   avatar: { type: String, default: "" }, 
+  googleId: { type: String, unique: true, sparse: true },
   phone: { 
     type: String, 
     default: "",

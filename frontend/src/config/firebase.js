@@ -19,4 +19,4 @@ try {
   console.warn("Firebase failed to initialize:", error);
 }
 
-export { auth, googleProvider, signInWithPopup };
+export { auth, googleProvider, signInWithPopup, GoogleAuthProvider };

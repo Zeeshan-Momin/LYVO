@@ -3,8 +3,8 @@ const Razorpay = require("razorpay");
 const keyId = process.env.RAZORPAY_KEY_ID;
 const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
-const isDummyKey = !keyId || keyId.includes("xxxx") || keyId.includes("test") ||
-                   !keySecret || keySecret.includes("xxxx") || keySecret.includes("test");
+const isDummyKey = !keyId || keyId.includes("xxxx") || keyId.includes("mock") || keyId === "rzp_test_xxxxxxxxxxxxxxxx" ||
+                   !keySecret || keySecret.includes("xxxx") || keySecret.includes("mock") || keySecret === "rzp_secret_xxxxxxxxxxxxxxxx";
 
 let razorpay;
 

@@ -10,7 +10,7 @@ import HeroShoe from "../components/HeroShoe"
 
 function Hero() {
   return (
-    <section className="relative min-h-[75vh] md:min-h-[85vh] flex items-center overflow-hidden pt-[116px] pb-12 md:pb-20 bg-grid-pattern">
+    <section className="relative min-h-[70vh] md:min-h-[77vh] flex items-center overflow-hidden pt-12 pb-8 md:pb-20 bg-grid-pattern">
       {/* Luxury semantic spot lights */}
       <div className="absolute inset-0 hero-glow-1 pointer-events-none" />
       <div className="absolute inset-0 hero-glow-2 pointer-events-none" />
@@ -24,42 +24,43 @@ function Hero() {
           transition={{ duration: 0.8, ease: [.16, 1, .3, 1] }}
           className="flex flex-col items-center lg:items-start text-center lg:text-left space-y-6 sm:space-y-7"
         >
-          {/* Floating Metallic Logo Plaque */}
-          <motion.div
-            animate={{
-              y: [0, -10, 0],
-              rotateX: [0, 1.5, 0],
-              rotateY: [0, 3, 0]
-            }}
-            transition={{
-              duration: 6,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-            style={{ perspective: 1000 }}
-            className="relative select-none w-fit dark:invert-0 invert"
-          >
-            <img
-              src="/logo.png"
-              alt="LYVO Logo"
-              className="h-20 sm:h-24 md:h-28 lg:h-32 xl:h-36 w-auto object-contain drop-shadow-[0_20px_45px_rgba(255,255,255,0.06)] transition-transform duration-500 hover:scale-[1.02]"
-            />
-            {/* Chrome reflection overlay */}
-            <div className="absolute inset-0 mix-blend-overlay pointer-events-none shine-beam"
-              style={{
-                maskImage: "url('/logo.png')",
-                WebkitMaskImage: "url('/logo.png')",
-                maskSize: "contain",
-                WebkitMaskSize: "contain",
-                maskRepeat: "no-repeat",
-                WebkitMaskRepeat: "no-repeat"
+          {/* Centered Brand Composition */}
+          <div className="flex flex-col items-center space-y-3 w-full lg:w-fit">
+            {/* Floating Metallic Logo Plaque */}
+            <motion.div
+              animate={{
+                y: [0, -10, 0],
+                rotateX: [0, 1.5, 0],
+                rotateY: [0, 3, 0]
               }}
-            />
-          </motion.div>
+              transition={{
+                duration: 6,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+              style={{ perspective: 1000 }}
+              className="relative select-none w-fit dark:invert-0 invert"
+            >
+              <img
+                src="/logo.png"
+                alt="LYVO Logo"
+                className="h-20 sm:h-24 md:h-28 lg:h-32 xl:h-36 w-auto object-contain drop-shadow-[0_20px_45px_rgba(255,255,255,0.06)] transition-transform duration-500 hover:scale-[1.02]"
+              />
+              {/* Chrome reflection overlay */}
+              <div className="absolute inset-0 mix-blend-overlay pointer-events-none shine-beam"
+                style={{
+                  maskImage: "url('/logo.png')",
+                  WebkitMaskImage: "url('/logo.png')",
+                  maskSize: "contain",
+                  WebkitMaskSize: "contain",
+                  maskRepeat: "no-repeat",
+                  WebkitMaskRepeat: "no-repeat"
+                }}
+              />
+            </motion.div>
 
-          {/* Spaced Premium Tagline */}
-          <div>
-            <h2 className="font-sans text-[11px] sm:text-xs tracking-[0.45em] sm:tracking-[0.55em] uppercase text-white/70 font-medium leading-none">
+            {/* Spaced Premium Tagline */}
+            <h2 className="font-sans text-[11px] sm:text-xs tracking-[0.45em] sm:tracking-[0.55em] pl-[0.45em] sm:pl-[0.55em] uppercase text-white/70 font-medium leading-none pt-1 text-center">
               Live Your Vision Out
             </h2>
           </div>
@@ -112,7 +113,7 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.08, duration: 0.4 }}
-              className="flex items-center gap-4 px-6 py-8"
+              className="flex items-center gap-4 px-6 py-4"
             >
               <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white text-lg shrink-0">{icon}</div>
               <div><p className="font-semibold text-sm tracking-wide text-white">{title}</p><p className="text-white/40 text-xs mt-0.5">{desc}</p></div>
@@ -120,7 +121,7 @@ export default function Home() {
           ))}
         </div>
       </div>
-      <div className="overflow-hidden bg-white/5 border-y border-white/10 py-4">
+      <div className="overflow-hidden bg-white/5 border-y border-white/10 py-2.5">
         <motion.div className="flex whitespace-nowrap" animate={{ x: ["0%", "-50%"] }} transition={{ duration: 25, repeat: Infinity, ease: "linear" }}>
           {[...Array(6)].map((_, i) => <span key={i} className="font-display text-sm tracking-[0.25em] uppercase text-white/50 px-8">Live Your Vision Out <span className="text-white/20 mx-3">·</span> SS 2026 Collection <span className="text-white/20 mx-3">·</span></span>)}
         </motion.div>

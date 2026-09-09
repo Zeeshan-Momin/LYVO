@@ -30,7 +30,7 @@ exports.placeOrder=ah(async(req,res)=>{
       }
       const crypto = require("crypto");
       const keySecret = process.env.RAZORPAY_KEY_SECRET;
-      const isMockMode = !keySecret || keySecret.includes("xxxx") || keySecret.includes("test");
+      const isMockMode = !keySecret || keySecret.includes("xxxx") || keySecret.includes("mock") || keySecret === "rzp_secret_xxxxxxxxxxxxxxxx";
       if(!isMockMode){
         const expectedSignature = crypto.createHmac("sha256", keySecret).update(razorpayOrderId + "|" + razorpayPaymentId).digest("hex");
         if(expectedSignature !== razorpaySignature) {
