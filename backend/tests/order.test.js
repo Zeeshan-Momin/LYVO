@@ -129,4 +129,125 @@ describe("Order API Tests & Concurrency Checks", () => {
     const errorResponse = responses.find(r => r.statusCode === 400);
     expect(errorResponse.body.message).toMatch(/insufficient stock/i);
   });
+
+  describe("Razorpay Payment Verification in placeOrder", () => {
+    const crypto = require("crypto");
+
+    it("should place order with valid Razorpay signature and mark isPaid=true", async () => {
+      const orderId = "order_rzp_123";
+      const paymentId = "pay_rzp_123";
+      const signature = crypto
+        .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+        .update(`${orderId}|${paymentId}`)
+        .digest("hex");
+
+      const res = await request(app)
+        .post("/api/orders")
+        .set("Authorization", `Bearer ${userToken}`)
+        .send({
+          items: [{
+            product: productObj._id.toString(),
+            name: productObj.name,
+            price: productObj.price,
+            size: "UK 9",
+            quantity: 1
+          }],
+          shippingAddress: {
+            fullName: "Jane Doe",
+            phone: "9876543211",
+            address: "123 Main St",
+            city: "Metropolis",
+            state: "NY",
+            zipCode: "10001",
+            country: "USA"
+          },
+          paymentMethod: "card",
+          razorpayOrderId: orderId,
+          razorpayPaymentId: paymentId,
+          razorpaySignature: signature
+        });
+
+      expect(res.statusCode).toBe(201);
+      expect(res.body.success).toBe(true);
+      expect(res.body.order.isPaid).toBe(true);
+      expect(res.body.order.paidAt).toBeDefined();
+    });
+
+    it("should reject order when Razorpay signature is invalid and not deduct stock", async () => {
+      const res = await request(app)
+        .post("/api/orders")
+        .set("Authorization", `Bearer ${userToken}`)
+        .send({
+          items: [{
+            product: productObj._id.toString(),
+            name: productObj.name,
+            price: productObj.price,
+            size: "UK 9",
+            quantity: 1
+          }],
+          shippingAddress: {
+            fullName: "Jane Doe",
+            phone: "9876543211",
+            address: "123 Main St",
+            city: "Metropolis",
+            state: "NY",
+            zipCode: "10001",
+            country: "USA"
+          },
+          paymentMethod: "card",
+          razorpayOrderId: "order_rzp_123",
+          razorpayPaymentId: "pay_rzp_123",
+          razorpaySignature: "invalid_tampered_signature"
+        });
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toMatch(/signature verification failed/i);
+
+      // Stock should still be 1
+      const prod = await Product.findById(productObj._id);
+      expect(prod.sizes[0].stock).toBe(1);
+    });
+
+    it("should fail closed and not create order when RAZORPAY_KEY_SECRET is unset", async () => {
+      const originalSecret = process.env.RAZORPAY_KEY_SECRET;
+      delete process.env.RAZORPAY_KEY_SECRET;
+
+      try {
+        const res = await request(app)
+          .post("/api/orders")
+          .set("Authorization", `Bearer ${userToken}`)
+          .send({
+            items: [{
+              product: productObj._id.toString(),
+              name: productObj.name,
+              price: productObj.price,
+              size: "UK 9",
+              quantity: 1
+            }],
+            shippingAddress: {
+              fullName: "Jane Doe",
+              phone: "9876543211",
+              address: "123 Main St",
+              city: "Metropolis",
+              state: "NY",
+              zipCode: "10001",
+              country: "USA"
+            },
+            paymentMethod: "card",
+            razorpayOrderId: "order_rzp_123",
+            razorpayPaymentId: "pay_rzp_123",
+            razorpaySignature: "dummy_sig"
+          });
+
+        expect(res.statusCode).toBe(500);
+        expect(res.body.message).toMatch(/RAZORPAY_KEY_SECRET/i);
+
+        // Stock should still be 1
+        const prod = await Product.findById(productObj._id);
+        expect(prod.sizes[0].stock).toBe(1);
+      } finally {
+        process.env.RAZORPAY_KEY_SECRET = originalSecret;
+      }
+    });
+  });
 });

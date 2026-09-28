@@ -77,20 +77,29 @@ exports.verifyRazorpayPayment = ah(async (req, res) => {
     return res.status(400).json({ message: "Missing Razorpay payment details" });
   }
 
-  const crypto = require("crypto");
-  const keySecret = process.env.RAZORPAY_KEY_SECRET;
-  const isMockMode = !keySecret || keySecret.includes("xxxx") || keySecret.includes("mock") || keySecret === "rzp_secret_xxxxxxxxxxxxxxxx";
-
-  if (isMockMode) {
+  // Strict mock mode: ONLY allowed when NODE_ENV is "test" AND ALLOW_MOCK_PAYMENTS is explicitly "true"
+  if (process.env.NODE_ENV === "test" && process.env.ALLOW_MOCK_PAYMENTS === "true") {
+    console.warn("⚠️ WARNING: MOCK PAYMENTS ARE ENABLED (ALLOW_MOCK_PAYMENTS=true). NEVER USE THIS IN PRODUCTION!");
     return res.json({ success: true, message: "Payment verified successfully (Mock Mode)" });
   }
 
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+  if (!keySecret) {
+    return res.status(500).json({ success: false, message: "Payment configuration error: RAZORPAY_KEY_SECRET is not configured" });
+  }
+
+  const crypto = require("crypto");
   const expectedSignature = crypto
     .createHmac("sha256", keySecret)
-    .update(razorpayOrderId + "|" + razorpayPaymentId)
+    .update(`${razorpayOrderId}|${razorpayPaymentId}`)
     .digest("hex");
 
-  if (expectedSignature !== razorpaySignature) {
+  const expectedBuf = Buffer.from(expectedSignature, "utf8");
+  const actualBuf = Buffer.from(typeof razorpaySignature === "string" ? razorpaySignature : "", "utf8");
+
+  const isMatch = expectedBuf.length === actualBuf.length && crypto.timingSafeEqual(expectedBuf, actualBuf);
+
+  if (!isMatch) {
     return res.status(400).json({ success: false, message: "Signature verification failed" });
   }
 

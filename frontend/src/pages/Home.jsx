@@ -106,7 +106,7 @@ export default function Home() {
       <Hero />
       <div className="border-y border-white/5 bg-dark-800/30 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-2 md:grid-cols-4 divide-x divide-white/5">
-          {[[<FiTruck />, "Free Shipping", "On orders above ₹999"], [<FiRefreshCw />, "Easy Returns", "30-day hassle-free"], [<FiShield />, "100% Authentic", "Genuine products"], [<FiZap />, "Fast Delivery", "3–5 business days"]].map(([icon, title, desc], i) => (
+          {[[<FiTruck />, "Free Shipping", "On orders above ₹2,999"], [<FiRefreshCw />, "Easy Returns", "7-day hassle-free"], [<FiShield />, "100% Authentic", "Genuine products"], [<FiZap />, "Fast Delivery", "3–5 business days"]].map(([icon, title, desc], i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 15 }}

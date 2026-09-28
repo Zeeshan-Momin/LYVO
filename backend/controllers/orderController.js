@@ -28,15 +28,33 @@ exports.placeOrder=ah(async(req,res)=>{
         session.endSession();
         return res.status(400).json({message:"Missing Razorpay transaction details"});
       }
-      const crypto = require("crypto");
-      const keySecret = process.env.RAZORPAY_KEY_SECRET;
-      const isMockMode = !keySecret || keySecret.includes("xxxx") || keySecret.includes("mock") || keySecret === "rzp_secret_xxxxxxxxxxxxxxxx";
-      if(!isMockMode){
-        const expectedSignature = crypto.createHmac("sha256", keySecret).update(razorpayOrderId + "|" + razorpayPaymentId).digest("hex");
-        if(expectedSignature !== razorpaySignature) {
+
+      // Strict mock mode: ONLY allowed when NODE_ENV is "test" AND ALLOW_MOCK_PAYMENTS is explicitly "true"
+      if (process.env.NODE_ENV === "test" && process.env.ALLOW_MOCK_PAYMENTS === "true") {
+        console.warn("⚠️ WARNING: MOCK PAYMENTS ARE ENABLED (ALLOW_MOCK_PAYMENTS=true). NEVER USE THIS IN PRODUCTION!");
+      } else {
+        const keySecret = process.env.RAZORPAY_KEY_SECRET;
+        if (!keySecret) {
           await session.abortTransaction();
           session.endSession();
-          return res.status(400).json({message: "Transaction signature verification failed"});
+          return res.status(500).json({ message: "Payment configuration error: RAZORPAY_KEY_SECRET is not configured" });
+        }
+
+        const crypto = require("crypto");
+        const expectedSignature = crypto
+          .createHmac("sha256", keySecret)
+          .update(`${razorpayOrderId}|${razorpayPaymentId}`)
+          .digest("hex");
+
+        const expectedBuf = Buffer.from(expectedSignature, "utf8");
+        const actualBuf = Buffer.from(typeof razorpaySignature === "string" ? razorpaySignature : "", "utf8");
+
+        const isMatch = expectedBuf.length === actualBuf.length && crypto.timingSafeEqual(expectedBuf, actualBuf);
+
+        if (!isMatch) {
+          await session.abortTransaction();
+          session.endSession();
+          return res.status(400).json({ message: "Transaction signature verification failed" });
         }
       }
       isPaid=true;paidAt=new Date();
