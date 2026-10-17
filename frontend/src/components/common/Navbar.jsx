@@ -12,6 +12,7 @@ const NAV = [
   { to: "/products", label: "Shop" },
   { to: "/products?isNew=true", label: "New Drops" },
   { to: "/products?isFeatured=true", label: "Featured" },
+  { to: "/accessories", label: "Accessories" },
   { to: "/products?gender=men", label: "Men" },
   { to: "/products?gender=women", label: "Women" },
 ]
@@ -28,6 +29,9 @@ export default function Navbar() {
     const currentPath = location.pathname + location.search
     if (to === "/products") {
       return currentPath === "/products" || currentPath === "/products/";
+    }
+    if (to === "/accessories") {
+      return location.pathname === "/accessories" || location.pathname === "/accessories/";
     }
     return currentPath.includes(to);
   }

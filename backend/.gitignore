@@ -1,0 +1,3 @@
+# Runtime-generated uploads and report exports
+uploads/*
+!uploads/.gitkeep

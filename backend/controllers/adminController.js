@@ -88,3 +88,77 @@ exports.getSalesAnalytics=ah(async(req,res)=>{
   cache.set(cacheKey, analyticsData, 300); // 5 minutes cache
   res.json(analyticsData);
 });
+
+// Phase 1 Enhanced Analytics Endpoints
+const analyticsService = require("../services/analyticsService");
+
+exports.getOverview = ah(async (req, res) => {
+  const { startDate, endDate } = req.query;
+  const data = await analyticsService.getOverviewAnalytics({ startDate, endDate });
+  res.json({ success: true, ...data });
+});
+
+exports.getDetailedSales = ah(async (req, res) => {
+  const { startDate, endDate, interval, category, gender, paymentMethod } = req.query;
+  const data = await analyticsService.getSalesAnalytics({ startDate, endDate, interval, category, gender, paymentMethod });
+  res.json({ success: true, ...data });
+});
+
+exports.getCustomersOverview = ah(async (req, res) => {
+  const { page, limit, search, sortBy, sortDir, segment } = req.query;
+  const data = await analyticsService.getCustomerAnalytics({ page, limit, search, sortBy, sortDir, segment });
+  res.json({ success: true, ...data });
+});
+
+exports.getCustomerProfile = ah(async (req, res) => {
+  const data = await analyticsService.getCustomer360Profile(req.params.id);
+  res.json({ success: true, ...data });
+});
+
+exports.getDataQuality = ah(async (req, res) => {
+  const data = await analyticsService.getDataQualityMetrics();
+  res.json({ success: true, ...data });
+});
+
+// Phase 2 BI & Operational Analytics Endpoints
+exports.getProductAnalytics = ah(async (req, res) => {
+  const { startDate, endDate, category, gender, search, sortBy, sortDir, page, limit, lowStockThreshold } = req.query;
+  const data = await analyticsService.getProductAnalytics({ startDate, endDate, category, gender, search, sortBy, sortDir, page, limit, lowStockThreshold });
+  res.json({ success: true, ...data });
+});
+
+exports.getSizeColorAnalytics = ah(async (req, res) => {
+  const { startDate, endDate, category, gender, search, type } = req.query;
+  const data = await analyticsService.getSizeColorAnalytics({ startDate, endDate, category, gender, search, type });
+  res.json({ success: true, ...data });
+});
+
+exports.getInventoryAnalytics = ah(async (req, res) => {
+  const { category, gender, stockStatus, search, lowStockThreshold } = req.query;
+  const data = await analyticsService.getInventoryAnalytics({ category, gender, stockStatus, search, lowStockThreshold });
+  res.json({ success: true, ...data });
+});
+
+exports.getGeographyAnalytics = ah(async (req, res) => {
+  const { startDate, endDate } = req.query;
+  const data = await analyticsService.getGeographyAnalytics({ startDate, endDate });
+  res.json({ success: true, ...data });
+});
+
+exports.getPaymentAnalytics = ah(async (req, res) => {
+  const { startDate, endDate } = req.query;
+  const data = await analyticsService.getPaymentAnalytics({ startDate, endDate });
+  res.json({ success: true, ...data });
+});
+
+exports.getShippingAnalytics = ah(async (req, res) => {
+  const { startDate, endDate } = req.query;
+  const data = await analyticsService.getShippingAnalytics({ startDate, endDate });
+  res.json({ success: true, ...data });
+});
+
+exports.getReturnsAnalytics = ah(async (req, res) => {
+  const { startDate, endDate } = req.query;
+  const data = await analyticsService.getReturnsAnalytics({ startDate, endDate });
+  res.json({ success: true, ...data });
+});

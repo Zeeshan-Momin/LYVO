@@ -158,11 +158,14 @@ app.use("/api/upload", require("./routes/upload"));
 app.use("/api/reviews", require("./routes/reviews"));
 app.use("/api/coupons", require("./routes/coupons"));
 app.use("/api/payment", require("./routes/payment"));
+app.use("/api/shipping", require("./routes/shipping"));
 const paymentController = require("./controllers/paymentController");
 const { protect } = require("./middleware/auth");
 app.post("/api/create-order", protect, paymentController.createRazorpayOrder);
 app.post("/api/verify-payment", protect, paymentController.verifyRazorpayPayment);
 app.use("/api/analytics", require("./routes/analytics"));
+app.use("/api/admin/finance", require("./routes/finance"));
+app.use("/api/admin/tax", require("./routes/tax"));
 app.use("*", (req, res) => res.status(404).json({ message: `${req.originalUrl} not found` }));
 
 if (process.env.SENTRY_DSN) {

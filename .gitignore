@@ -42,3 +42,7 @@ docker-data/
 # Testing
 playwright-report/
 test-results/
+
+# Backend runtime uploads and generated reports
+/backend/uploads/*
+!/backend/uploads/.gitkeep

@@ -60,6 +60,49 @@ exports.placeOrder=ah(async(req,res)=>{
       isPaid=true;paidAt=new Date();
     }
 
+    // Allocate coupon discount pro-rata and build financial snapshot safely
+    let remainingCouponToAllocate = Math.min(couponDiscount, subtotal);
+    for (let i = 0; i < validItems.length; i++) {
+      const it = validItems[i];
+      const itemLineTotal = Math.max(0, it.price * it.quantity);
+      if (i === validItems.length - 1) {
+        it.allocatedCouponDiscount = Math.min(itemLineTotal, remainingCouponToAllocate);
+      } else {
+        const theoreticalShare = subtotal > 0 ? Math.round((itemLineTotal / subtotal) * couponDiscount) : 0;
+        const actualShare = Math.min(itemLineTotal, theoreticalShare, remainingCouponToAllocate);
+        it.allocatedCouponDiscount = actualShare;
+        remainingCouponToAllocate -= actualShare;
+      }
+    }
+
+    const productDiscounts = validItems.reduce((acc, it) => acc + ((it.itemDiscount || 0) * it.quantity), 0);
+    const hasActual = validItems.some(it => it.costPriceSource === "actual");
+    const hasEstimated = validItems.some(it => it.costPriceSource === "estimated");
+    const hasUnknown = validItems.some(it => it.costPriceSource === "unknown" || it.costPrice === null || it.costPrice === undefined);
+
+    let cogsStatus = "incomplete";
+    if (!hasUnknown && hasActual && !hasEstimated) cogsStatus = "complete_actual";
+    else if (!hasUnknown && hasEstimated) cogsStatus = "fully_estimated";
+    else if (hasActual && hasUnknown) cogsStatus = "partially_estimated";
+
+    const totalCogs = hasUnknown ? null : validItems.reduce((acc, it) => acc + ((it.costPrice || 0) * it.quantity), 0);
+    const placeOfSupply = shippingAddress?.state || "";
+    const originState = process.env.DELHIVERY_WAREHOUSE_STATE || "Maharashtra";
+    const isInterState = placeOfSupply.trim().toLowerCase() !== originState.trim().toLowerCase();
+
+    const financialSnapshot = {
+      grossMerchandiseSales: subtotal,
+      productDiscounts,
+      couponDiscounts: couponDiscount,
+      netMerchandiseSales: Math.max(0, subtotal - couponDiscount),
+      shippingRevenue: shippingCost,
+      taxCollected: tax,
+      placeOfSupply,
+      isInterState,
+      totalCogs,
+      cogsStatus
+    };
+
     const orders = await Order.create([{
       user:req.user._id,
       items:validItems,
@@ -67,6 +110,7 @@ exports.placeOrder=ah(async(req,res)=>{
       paymentMethod,
       couponCode:couponCode?.toUpperCase()||"",
       pricing:{subtotal,shippingCost,tax,couponDiscount,total},
+      financialSnapshot,
       isPaid,
       paidAt,
       razorpayOrderId:paymentMethod!=="cod"?razorpayOrderId:"",
@@ -138,7 +182,22 @@ exports.cancelOrder=ah(async(req,res)=>{
   order.statusHistory.push({status:"cancelled",note:order.cancelReason,updatedBy:req.user._id});
   if(order.isPaid&&order.razorpayPaymentId&&!order.isRefunded){
     const refund=await razorpay.payments.refund(order.razorpayPaymentId, { amount: Math.round(order.pricing.total * 100) });
-    order.isRefunded=true;order.refundedAt=new Date();order.razorpayRefundId=refund.id;
+    const refundAmt = Math.round(order.pricing.total);
+    order.isRefunded=true;
+    order.refundedAt=new Date();
+    order.razorpayRefundId=refund.id;
+    order.totalRefundedAmount = refundAmt;
+    order.refunds.push({
+      refundId: `REF_${Date.now()}`,
+      gatewayRefundId: refund.id,
+      gateway: "razorpay",
+      type: "full_cancellation",
+      amount: refundAmt,
+      reason: req.body.reason || "Order cancelled by customer",
+      status: "processed",
+      processedAt: new Date(),
+      processedBy: req.user._id
+    });
   }
   await order.save();
   for(const item of order.items)await Product.findOneAndUpdate({_id:item.product,"sizes.size":item.size},{$inc:{"sizes.$.stock":item.quantity,soldCount:-item.quantity}});
@@ -175,7 +234,22 @@ exports.updateReturnStatus=ah(async(req,res)=>{
     order.status="returned";
     if(order.isPaid&&order.razorpayPaymentId&&!order.isRefunded){
       const refund=await razorpay.payments.refund(order.razorpayPaymentId, { amount: Math.round(order.pricing.total * 100) });
-      order.isRefunded=true;order.refundedAt=new Date();order.razorpayRefundId=refund.id;
+      const refundAmt = Math.round(order.pricing.total);
+      order.isRefunded=true;
+      order.refundedAt=new Date();
+      order.razorpayRefundId=refund.id;
+      order.totalRefundedAmount = refundAmt;
+      order.refunds.push({
+        refundId: `REF_${Date.now()}`,
+        gatewayRefundId: refund.id,
+        gateway: "razorpay",
+        type: "return_refund",
+        amount: refundAmt,
+        reason: order.returnRequest?.reason || "Return approved",
+        status: "processed",
+        processedAt: new Date(),
+        processedBy: req.user._id
+      });
     }
     for(const item of order.items)await Product.findOneAndUpdate({_id:item.product,"sizes.size":item.size},{$inc:{"sizes.$.stock":item.quantity,soldCount:-item.quantity}});
   }else{

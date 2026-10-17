@@ -56,6 +56,22 @@ const validateEnv = () => {
     process.exit(1);
   }
 
+  if (process.env.DELHIVERY_ENV) {
+    const validDelhiveryEnvs = ["staging", "production", "test"];
+    if (!validDelhiveryEnvs.includes(process.env.DELHIVERY_ENV.toLowerCase())) {
+      logger.error(`❌ CRITICAL: DELHIVERY_ENV must be one of: ${validDelhiveryEnvs.join(", ")}`);
+      process.exit(1);
+    }
+  }
+
+  if (process.env.DELHIVERY_REQUEST_TIMEOUT_MS) {
+    const timeout = Number(process.env.DELHIVERY_REQUEST_TIMEOUT_MS);
+    if (isNaN(timeout) || timeout <= 0) {
+      logger.error("❌ CRITICAL: DELHIVERY_REQUEST_TIMEOUT_MS must be a positive number");
+      process.exit(1);
+    }
+  }
+
   logger.info("🛡️ Environment validation passed successfully");
 };
 

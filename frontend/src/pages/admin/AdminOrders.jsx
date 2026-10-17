@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { FiSearch, FiX, FiCheck, FiPackage, FiEye } from "react-icons/fi"
-import { orderAPI } from "../../api"
+import { orderAPI, shippingAPI } from "../../api"
 import Loading from "../../components/common/Loading"
 import toast from "react-hot-toast"
 
@@ -10,8 +10,22 @@ const SC = {pending:"bg-yellow-500/15 text-yellow-400 border-yellow-500/25",conf
 
 function OrderModal({ order, onClose, onUpdate }) {
   const [status,setStatus]=useState(order.status), [note,setNote]=useState(""), [tracking,setTracking]=useState(order.trackingNumber||""), [saving,setSaving]=useState(false)
+  const [dispatching, setDispatching] = useState(false)
   const save = async () => { setSaving(true); try { await orderAPI.updateStatus(order._id,{status,note,trackingNumber:tracking}); toast.success("Updated"); onUpdate(); onClose() } catch(e) { toast.error(e.response?.data?.message||"Failed") } finally { setSaving(false) } }
   const resolveReturn = async (decision) => { setSaving(true); try { await orderAPI.updateReturnStatus(order._id,{decision}); toast.success(`Return ${decision}`); onUpdate(); onClose() } catch(e) { toast.error(e.response?.data?.message||"Failed") } finally { setSaving(false) } }
+  const handleCreateShipment = async () => {
+    setDispatching(true)
+    try {
+      const { data } = await shippingAPI.createShipment(order._id)
+      toast.success(`Delhivery AWB generated: ${data.waybill}`)
+      onUpdate()
+      onClose()
+    } catch (e) {
+      toast.error(e.response?.data?.message || "Failed to create shipment")
+    } finally {
+      setDispatching(false)
+    }
+  }
   return (
     <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <motion.div initial={{scale:.95}} animate={{scale:1}} className="bg-dark-800 border border-white/10 rounded-3xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
@@ -20,6 +34,45 @@ function OrderModal({ order, onClose, onUpdate }) {
           <div className="bg-dark-700/50 rounded-xl p-4"><p className="text-white/40 text-xs uppercase mb-2">Customer</p><p className="font-medium">{order.user?.name}</p><p className="text-white/50 text-sm">{order.user?.email}</p></div>
           <div><p className="text-white/40 text-xs uppercase mb-3">Items</p><div className="space-y-2">{order.items?.map((item,i)=><div key={i} className="flex items-center gap-3 bg-dark-700/30 rounded-xl p-3"><div className="w-12 h-12 rounded-lg overflow-hidden bg-dark-600 shrink-0"><img src={item.image} alt="" className="w-full h-full object-cover"/></div><div className="flex-1 min-w-0"><p className="text-sm font-medium line-clamp-1">{item.name}</p><p className="text-white/40 text-xs">Size: {item.size} · Qty: {item.quantity}</p></div><p className="text-acid text-sm font-semibold shrink-0">₹{(item.price*item.quantity).toLocaleString()}</p></div>)}</div></div>
           <div className="bg-dark-700/50 rounded-xl p-4"><div className="space-y-2 text-sm">{[["Subtotal",`₹${order.pricing?.subtotal?.toLocaleString()}`],["Shipping",order.pricing?.shippingCost===0?"Free":`₹${order.pricing?.shippingCost}`],["Tax",`₹${order.pricing?.tax?.toLocaleString()}`]].map(([l,v])=><div key={l} className="flex justify-between"><span className="text-white/50">{l}</span><span>{v}</span></div>)}<div className="border-t border-white/8 pt-2 flex justify-between font-bold"><span>Total</span><span className="text-acid">₹{order.pricing?.total?.toLocaleString()}</span></div></div></div>
+
+          {/* Delhivery Shipping Block */}
+          {order.shipping?.waybill ? (
+            <div className="bg-acid/10 border border-acid/20 rounded-xl p-4 flex items-center justify-between flex-wrap gap-3">
+              <div>
+                <p className="text-white/40 text-[10px] uppercase tracking-widest font-mono">Courier</p>
+                <p className="text-sm font-semibold text-white">Delhivery</p>
+              </div>
+              <div>
+                <p className="text-white/40 text-[10px] uppercase tracking-widest font-mono">AWB</p>
+                <p className="text-sm font-mono font-bold text-acid">{order.shipping.waybill}</p>
+              </div>
+              <div>
+                <p className="text-white/40 text-[10px] uppercase tracking-widest font-mono">Status</p>
+                <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-acid text-dark-900 capitalize mt-0.5">
+                  {order.shipping.delhiveryStatus || "Manifested"}
+                </span>
+              </div>
+            </div>
+          ) : !["cancelled", "refunded", "returned"].includes(order.status) ? (
+            <div className="bg-dark-700/50 border border-white/8 rounded-xl p-4 flex items-center justify-between flex-wrap gap-3">
+              <div>
+                <p className="text-xs font-semibold text-white">Delhivery Logistics</p>
+                <p className="text-[11px] text-white/40">Manifest shipment and generate AWB directly via Delhivery API</p>
+              </div>
+              <button
+                onClick={handleCreateShipment}
+                disabled={dispatching || saving}
+                className="btn-primary py-2 px-4 text-xs font-semibold flex items-center gap-1.5"
+              >
+                {dispatching ? (
+                  <span className="w-3.5 h-3.5 border-2 border-dark-900/30 border-t-dark-900 rounded-full animate-spin" />
+                ) : (
+                  <><FiPackage size={14} /> Create Delhivery Shipment</>
+                )}
+              </button>
+            </div>
+          ) : null}
+
           {order.status==="return_requested" && order.returnRequest?.status==="pending" && (
             <div className="bg-purple-500/10 border border-purple-500/25 rounded-xl p-4 space-y-3">
               <p className="text-white/40 text-xs uppercase">Return Requested</p>

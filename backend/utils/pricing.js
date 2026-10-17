@@ -8,14 +8,36 @@ async function computePricing(items, couponCode) {
   let subtotal = 0;
   const validItems = [];
   for (const item of items) {
-    const p = await Product.findById(item.product);
+    const p = await Product.findById(item.product).populate("category", "name");
     if (!p || !p.isActive) throw Object.assign(new Error(`${item.name || "Item"} unavailable`), { statusCode: 400 });
     const se = p.sizes.find((s) => s.size === item.size);
     if (!se || se.stock < item.quantity)
       throw Object.assign(new Error(`Insufficient stock: ${p.name} size ${item.size}`), { statusCode: 400 });
     const price = p.discountPrice || p.price;
     subtotal += price * item.quantity;
-    validItems.push({ product: p._id, name: p.name, image: p.images[0]?.url || "", price, size: item.size, color: item.color || "", quantity: item.quantity });
+
+    const categoryName = typeof p.category === "object" && p.category?.name ? p.category.name : (p.category ? String(p.category) : "Footwear");
+    const mrp = p.price || price;
+    const itemDiscount = Math.max(0, mrp - price);
+
+    validItems.push({
+      product: p._id,
+      name: p.name,
+      sku: p.sku || "",
+      image: p.images[0]?.url || "",
+      category: categoryName,
+      gender: p.gender || "unisex",
+      price,
+      size: item.size,
+      color: item.color || "",
+      quantity: item.quantity,
+      mrp,
+      itemDiscount,
+      allocatedCouponDiscount: 0, // Populated after coupon discount is known
+      hsn: p.hsn || "",
+      costPrice: p.costPrice !== undefined ? p.costPrice : null,
+      costPriceSource: p.costPriceSource || "unknown"
+    });
   }
 
   const shippingCost = subtotal >= 999 ? 0 : 99;

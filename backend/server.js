@@ -26,13 +26,31 @@ process.on("unhandledRejection", (reason, promise) => {
 });
 
 const connectDB = require("./config/db");
-connectDB();
-
 const app = require("./app");
 
 const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, () => logger.info(`🚀 LYVO API running on port ${PORT}`));
+let server;
 
+const startServer = async () => {
+  try {
+    // Connect to MongoDB before starting the API.
+    await connectDB();
+
+    server = app.listen(PORT, () => {
+      logger.info(`🚀 LYVO API running on port ${PORT}`);
+    });
+  } catch (error) {
+    logger.error("❌ Failed to start LYVO backend:", error.message);
+
+    if (process.env.SENTRY_DSN) {
+      Sentry.captureException(error);
+    }
+
+    process.exit(1);
+  }
+};
+
+startServer();
 const gracefulShutdown = (signal) => {
   logger.info(`⚙️ Received ${signal}. Starting graceful shutdown...`);
 

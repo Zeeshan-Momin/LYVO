@@ -76,4 +76,86 @@ describe("Product Catalog API Tests", () => {
     expect(res.body.suggestions.length).toBe(1);
     expect(res.body.suggestions[0]).toHaveProperty("brand", "Nike");
   });
+
+  it("should create a product with shipping dimensions and image metadata", async () => {
+    const res = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({
+        name: "Adidas Ultraboost",
+        description: "High performance running shoe",
+        brand: "Adidas",
+        category: categoryId,
+        gender: "unisex",
+        price: 15000,
+        sizes: JSON.stringify([{ size: "UK 8", stock: 5 }]),
+        weightGrams: 850,
+        lengthCm: 32,
+        widthCm: 20,
+        heightCm: 12
+      });
+
+    expect(res.statusCode).toBe(201);
+    expect(res.body.success).toBe(true);
+    expect(res.body.product).toHaveProperty("weightGrams", 850);
+    expect(res.body.product).toHaveProperty("lengthCm", 32);
+    expect(res.body.product).toHaveProperty("widthCm", 20);
+    expect(res.body.product).toHaveProperty("heightCm", 12);
+  });
+
+  it("should update product and preserve existing image metadata", async () => {
+    const res = await request(app)
+      .put(`/api/products/${productObj._id}`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({
+        name: "Nike Air Max 90 Updated",
+        existingImages: JSON.stringify([
+          { url: "https://res.cloudinary.com/test/image/upload/v1/sample.jpg", publicId: "lyvo/products/test/sample", isPrimary: true }
+        ])
+      });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.product.name).toBe("Nike Air Max 90 Updated");
+    expect(res.body.product.images.length).toBe(1);
+    expect(res.body.product.images[0].isPrimary).toBe(true);
+  });
+
+  it("should delete a single image from a product", async () => {
+    const prod = await Product.create({
+      name: "Shoe with images",
+      description: "Test description",
+      brand: "Puma",
+      category: categoryId,
+      gender: "unisex",
+      price: 5000,
+      images: [
+        { url: "https://res.cloudinary.com/test/1.jpg", publicId: "lyvo/products/p1/img1", isPrimary: true },
+        { url: "https://res.cloudinary.com/test/2.jpg", publicId: "lyvo/products/p1/img2", isPrimary: false }
+      ]
+    });
+
+    const res = await request(app)
+      .delete(`/api/products/${prod._id}/image`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ publicId: "lyvo/products/p1/img1" });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.images.length).toBe(1);
+    expect(res.body.images[0].publicId).toBe("lyvo/products/p1/img2");
+    expect(res.body.images[0].isPrimary).toBe(true);
+  });
+
+  it("should delete a product and return success", async () => {
+    const res = await request(app)
+      .delete(`/api/products/${productObj._id}`)
+      .set("Authorization", `Bearer ${adminToken}`);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.success).toBe(true);
+
+    const check = await Product.findById(productObj._id);
+    expect(check).toBeNull();
+  });
 });

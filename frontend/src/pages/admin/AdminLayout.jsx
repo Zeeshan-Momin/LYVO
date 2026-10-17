@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import { Outlet, NavLink, Link, useNavigate } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
-import { FiGrid, FiShoppingBag, FiPackage, FiUsers, FiBarChart2, FiTag, FiPercent, FiMenu, FiX, FiLogOut, FiBell, FiChevronRight, FiSun, FiMoon, FiAlertTriangle } from "react-icons/fi"
+import { FiGrid, FiShoppingBag, FiPackage, FiUsers, FiBarChart2, FiDollarSign, FiLayers, FiTag, FiPercent, FiMenu, FiX, FiLogOut, FiBell, FiChevronRight, FiSun, FiMoon, FiAlertTriangle } from "react-icons/fi"
 import { useAuth } from "../../context/AuthContext"
 import { useTheme } from "../../context/ThemeContext"
 import { adminAPI } from "../../api"
@@ -12,9 +12,12 @@ const NAV = [
   { to: "/admin/orders", icon: <FiPackage size={18} />, label: "Orders" },
   { to: "/admin/users", icon: <FiUsers size={18} />, label: "Users" },
   { to: "/admin/analytics", icon: <FiBarChart2 size={18} />, label: "Analytics" },
+  { to: "/admin/finance", icon: <FiDollarSign size={18} />, label: "Finance & P&L" },
+  { to: "/admin/tax", icon: <FiLayers size={18} />, label: "Tax & GST" },
   { to: "/admin/categories", icon: <FiTag size={18} />, label: "Categories" },
   { to: "/admin/coupons", icon: <FiPercent size={18} />, label: "Coupons" },
 ]
+
 
 function Sidebar({ onClose }) {
   const { user, logout } = useAuth()

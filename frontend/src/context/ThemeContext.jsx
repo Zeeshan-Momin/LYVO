@@ -6,8 +6,10 @@ const KEY = "lyvo_theme"
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem(KEY)
-    if (saved) return saved
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+    if (typeof window !== "undefined" && typeof window.matchMedia === "function") {
+      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+    }
+    return "light"
   })
 
   useEffect(() => {

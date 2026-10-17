@@ -18,20 +18,23 @@ function FilterPanel({ filters, onFilterChange, categories, onClose, isMobile=fa
     <div className="space-y-6">
       <div className="flex items-center justify-between"><h3 className="font-semibold text-sm tracking-widest uppercase">Filters</h3><button onClick={clear} className="text-xs text-acid hover:underline">Clear All</button></div>
       <div><p className="text-white/50 text-xs tracking-wider uppercase mb-3">Category</p>
-        <div className="space-y-2">{categories.map(c=>(
-          <div
-            key={c._id}
-            role="checkbox"
-            aria-checked={filters.category===c._id}
-            tabIndex={0}
-            onKeyDown={e=>{if(e.key===" "||e.key==="Enter"){e.preventDefault();set("category",c._id)}}}
-            onClick={()=>set("category",c._id)}
-            className="flex items-center gap-2.5 cursor-pointer group outline-none rounded focus-visible:ring-1 focus-visible:ring-acid/40"
-          >
-            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${filters.category===c._id?"bg-acid border-acid":"border-white/20 group-hover:border-acid/50"}`}>{filters.category===c._id && <div className="w-2 h-2 bg-dark-900 rounded-sm"/>}</div>
-            <span className={`text-sm transition-colors ${filters.category===c._id?"text-acid":"text-white/60 group-hover:text-white"}`}>{c.name}</span>
-          </div>
-        ))}</div>
+        <div className="space-y-2">{categories.map(c=>{
+          const isSelected = filters.category === c._id || filters.category === c.slug;
+          return (
+            <div
+              key={c._id}
+              role="checkbox"
+              aria-checked={isSelected}
+              tabIndex={0}
+              onKeyDown={e=>{if(e.key===" "||e.key==="Enter"){e.preventDefault();set("category",c._id)}}}
+              onClick={()=>set("category",c._id)}
+              className="flex items-center gap-2.5 cursor-pointer group outline-none rounded focus-visible:ring-1 focus-visible:ring-acid/40"
+            >
+              <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${isSelected?"bg-acid border-acid":"border-white/20 group-hover:border-acid/50"}`}>{isSelected && <div className="w-2 h-2 bg-dark-900 rounded-sm"/>}</div>
+              <span className={`text-sm transition-colors ${isSelected?"text-acid":"text-white/60 group-hover:text-white"}`}>{c.name}</span>
+            </div>
+          );
+        })}</div>
       </div>
       <div><p className="text-white/50 text-xs tracking-wider uppercase mb-3">Gender</p>
         <div className="flex flex-wrap gap-2">{GENDERS.map(g=><button key={g} onClick={()=>set("gender",g)} className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-all ${filters.gender===g?"bg-acid text-dark-900":"bg-dark-700 text-white/50 hover:bg-dark-600 hover:text-white"}`}>{g}</button>)}</div>

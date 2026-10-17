@@ -11,8 +11,10 @@ import Loading from "./components/common/Loading"
 import AnnouncementBanner from "./components/common/AnnouncementBanner"
 import ChatbotFloat from "./components/common/ChatbotFloat"
 import OnboardingWalkthrough from "./components/common/OnboardingWalkthrough"
+import SmoothScroll from "./components/common/SmoothScroll"
 const Home = lazy(() => import("./pages/Home"))
 const Products = lazy(() => import("./pages/Products"))
+const Accessories = lazy(() => import("./pages/Accessories"))
 const ProductDetail = lazy(() => import("./pages/ProductDetail"))
 const Cart = lazy(() => import("./pages/Cart"))
 const Checkout = lazy(() => import("./pages/Checkout"))
@@ -31,6 +33,8 @@ const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"))
 const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics").then(m => ({ default: m.AdminAnalytics })))
 const AdminCategories = lazy(() => import("./pages/admin/AdminCategories"))
 const AdminCoupons = lazy(() => import("./pages/admin/AdminCoupons"))
+const AdminFinance = lazy(() => import("./pages/admin/AdminFinance"))
+const AdminTax = lazy(() => import("./pages/admin/AdminTax"))
 
 function PrivateRoute() {
   const { user, loading } = useAuth();
@@ -57,41 +61,46 @@ export default function App() {
     <ThemeProvider>
     <AuthProvider>
       <CartProvider>
-        <Toaster position="top-right" toastOptions={{ duration:3000, style:{background:"#16161f",color:"#fff",border:"1px solid rgba(255,255,255,0.08)",borderRadius:"12px",fontSize:"14px"}, success:{iconTheme:{primary:"#FFFFFF",secondary:"#0A0A0A"}}, error:{iconTheme:{primary:"#FF3A1A",secondary:"#fff"}} }}/>
-        <Suspense fallback={<Loading fullscreen />}>
-          <Routes>
-            <Route element={<UserLayout/>}>
-              <Route path="/" element={<Home/>}/>
-              <Route path="/products" element={<Products/>}/>
-              <Route path="/products/:id" element={<ProductDetail/>}/>
-              <Route path="/cart" element={<Cart/>}/>
-              <Route path="/info/:section" element={<Info/>}/>
-              <Route element={<GuestRoute/>}>
-                <Route path="/login" element={<Login/>}/>
-                <Route path="/register" element={<Register/>}/>
+        <SmoothScroll>
+          <Toaster position="top-right" toastOptions={{ duration:3000, style:{background:"#16161f",color:"#fff",border:"1px solid rgba(255,255,255,0.08)",borderRadius:"12px",fontSize:"14px"}, success:{iconTheme:{primary:"#FFFFFF",secondary:"#0A0A0A"}}, error:{iconTheme:{primary:"#FF3A1A",secondary:"#fff"}} }}/>
+          <Suspense fallback={<Loading fullscreen />}>
+            <Routes>
+              <Route element={<UserLayout/>}>
+                <Route path="/" element={<Home/>}/>
+                <Route path="/products" element={<Products/>}/>
+                <Route path="/accessories" element={<Accessories/>}/>
+                <Route path="/products/:id" element={<ProductDetail/>}/>
+                <Route path="/cart" element={<Cart/>}/>
+                <Route path="/info/:section" element={<Info/>}/>
+                <Route element={<GuestRoute/>}>
+                  <Route path="/login" element={<Login/>}/>
+                  <Route path="/register" element={<Register/>}/>
+                </Route>
+                <Route element={<PrivateRoute/>}>
+                  <Route path="/checkout" element={<Checkout/>}/>
+                  <Route path="/profile" element={<Profile/>}/>
+                  <Route path="/orders" element={<OrderHistory/>}/>
+                  <Route path="/orders/:id" element={<OrderDetail/>}/>
+                  <Route path="/wishlist" element={<Wishlist/>}/>
+                </Route>
               </Route>
-              <Route element={<PrivateRoute/>}>
-                <Route path="/checkout" element={<Checkout/>}/>
-                <Route path="/profile" element={<Profile/>}/>
-                <Route path="/orders" element={<OrderHistory/>}/>
-                <Route path="/orders/:id" element={<OrderDetail/>}/>
-                <Route path="/wishlist" element={<Wishlist/>}/>
+              <Route element={<AdminRoute/>}>
+                <Route path="/admin" element={<AdminLayout/>}>
+                  <Route index element={<Dashboard/>}/>
+                  <Route path="products" element={<AdminProducts/>}/>
+                  <Route path="orders" element={<AdminOrders/>}/>
+                  <Route path="users" element={<AdminUsers/>}/>
+                  <Route path="analytics" element={<AdminAnalytics/>}/>
+                  <Route path="finance" element={<AdminFinance/>}/>
+                  <Route path="tax" element={<AdminTax/>}/>
+                  <Route path="categories" element={<AdminCategories/>}/>
+                  <Route path="coupons" element={<AdminCoupons/>}/>
+                </Route>
               </Route>
-            </Route>
-            <Route element={<AdminRoute/>}>
-              <Route path="/admin" element={<AdminLayout/>}>
-                <Route index element={<Dashboard/>}/>
-                <Route path="products" element={<AdminProducts/>}/>
-                <Route path="orders" element={<AdminOrders/>}/>
-                <Route path="users" element={<AdminUsers/>}/>
-                <Route path="analytics" element={<AdminAnalytics/>}/>
-                <Route path="categories" element={<AdminCategories/>}/>
-                <Route path="coupons" element={<AdminCoupons/>}/>
-              </Route>
-            </Route>
-            <Route path="*" element={<Navigate to="/" replace/>}/>
-          </Routes>
-        </Suspense>
+              <Route path="*" element={<Navigate to="/" replace/>}/>
+            </Routes>
+          </Suspense>
+        </SmoothScroll>
       </CartProvider>
     </AuthProvider>
     </ThemeProvider>

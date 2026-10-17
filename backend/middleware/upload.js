@@ -2,10 +2,10 @@ const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
 const path = require("path");
 
-cloudinary.config({ 
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
-  api_key: process.env.CLOUDINARY_API_KEY, 
-  api_secret: process.env.CLOUDINARY_API_SECRET 
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
 const isRealImage = (buffer) => {
@@ -18,28 +18,37 @@ const isRealImage = (buffer) => {
   return false;
 };
 
-exports.upload = multer({ 
-  storage: multer.memoryStorage(), 
-  limits: { fileSize: 5 * 1024 * 1024 }, 
-  fileFilter: (_, file, cb) => { 
-    const extOk = /^\.(jpeg|jpg|png|webp)$/i.test(path.extname(file.originalname)); 
-    const mimeOk = /^image\/(jpeg|png|webp)$/i.test(file.mimetype);
+exports.upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024, files: 6 },
+  fileFilter: (_, file, cb) => {
+    const extOk = /^\.(jpeg|jpg|png|webp)$/i.test(path.extname(file.originalname));
+    const mimeOk = /^image\/(jpeg|jpg|png|webp)$/i.test(file.mimetype);
     if (extOk && mimeOk) {
-      cb(null, true); 
+      cb(null, true);
     } else {
-      cb(new Error("Images only (JPEG, PNG, WEBP)"), false);
+      cb(new Error("Images only (JPEG, JPG, PNG, WEBP)"), false);
     }
-  } 
+  }
 });
 
-exports.uploadToCloudinary = (buffer, folder="lyvo") => new Promise((res, rej) => { 
+exports.uploadToCloudinary = (buffer, folder = "lyvo/products") => new Promise((res, rej) => {
   if (!isRealImage(buffer)) {
     return rej(Object.assign(new Error("Upload aborted: Invalid image binary signature"), { statusCode: 400 }));
   }
   cloudinary.uploader.upload_stream({ folder, resource_type: "image", quality: "auto" }, (err, result) => {
     if (err) return rej(err);
     res({ url: result.secure_url, publicId: result.public_id });
-  }).end(buffer); 
+  }).end(buffer);
 });
 
-exports.deleteFromCloudinary = async (publicId) => { if (publicId) await cloudinary.uploader.destroy(publicId); };
+exports.deleteFromCloudinary = async (publicId) => {
+  if (!publicId) return;
+  try {
+    await cloudinary.uploader.destroy(publicId);
+  } catch (err) {
+    console.error("Cloudinary delete error:", err?.message || err);
+  }
+};
+
+exports.cloudinary = cloudinary;
